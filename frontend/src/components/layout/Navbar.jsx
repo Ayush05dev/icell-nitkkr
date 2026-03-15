@@ -10,21 +10,35 @@ import {
   LogIn,
   UserPlus,
   User,
+  LayoutDashboard,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import supabase from "../../services/supabaseClient";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [openMenu, setOpenMenu] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  // Set user role from auth context
+  useEffect(() => {
+    if (user) {
+      setUserRole(user.role || "member");
+    }
+    setLoading(false);
+  }, [user]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    setUserRole(null);
     navigate("/");
+    window.location.reload();
   };
 
   const tabs = [
@@ -95,8 +109,8 @@ export default function Navbar() {
 
       {/* FLOATING AUTH BUTTONS (RIGHT SIDE) */}
       <div className="flex-1 flex justify-end">
-        <div className="flex items-center gap-2 px-4 py-2  rounded-full shadow-lg">
-          {user ? (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg">
+          {user && !loading ? (
             <div className="relative">
               <button
                 onClick={() => setOpenMenu(!openMenu)}
@@ -106,17 +120,40 @@ export default function Navbar() {
               </button>
 
               {openMenu && (
-                <div className="absolute right-0 mt-3 w-40 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg overflow-hidden">
-                  <button
-                    onClick={() => {
-                      navigate("/profile");
-                      setOpenMenu(false);
-                    }}
-                    className="w-full cursor-pointer text-left px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition"
-                  >
-                    Profile
-                  </button>
+                <div className="absolute right-0 mt-3 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg overflow-hidden">
+                  {/* Dashboard for Admin/Post Holder */}
+                  {userRole === "admin" || userRole === "post_holder" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          navigate("/admin/dashboard");
+                          setOpenMenu(false);
+                        }}
+                        className="w-full cursor-pointer text-left px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition flex items-center gap-2"
+                      >
+                        <LayoutDashboard size={16} />
+                        Admin Dashboard
+                      </button>
+                      <div className="border-t border-white/10"></div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Profile for Members */}
+                      <button
+                        onClick={() => {
+                          navigate("/profile");
+                          setOpenMenu(false);
+                        }}
+                        className="w-full cursor-pointer text-left px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition flex items-center gap-2"
+                      >
+                        <User size={16} />
+                        My Profile
+                      </button>
+                      <div className="border-t border-white/10"></div>
+                    </>
+                  )}
 
+                  {/* Logout */}
                   <button
                     onClick={handleLogout}
                     className="w-full cursor-pointer text-left px-4 py-3 text-sm text-red-400 hover:bg-white/10 transition"
@@ -126,7 +163,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : !loading ? (
             <>
               <button
                 onClick={() => navigate("/login")}
@@ -136,14 +173,14 @@ export default function Navbar() {
                 Login
               </button>
               <button
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/register_new")}
                 className="flex cursor-pointer items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all duration-300 border border-white/10 text-sm font-medium"
               >
                 <UserPlus size={16} />
                 Sign Up
               </button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

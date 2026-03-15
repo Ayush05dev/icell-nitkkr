@@ -42,7 +42,7 @@
 //           <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
 //           <span className="text-yellow-400 text-xs sm:text-sm font-medium">Our Team</span>
 //         </motion.div>
-        
+
 //         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-3 sm:mb-4">
 //           <span className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 bg-clip-text text-transparent">
 //             Meet Our
@@ -50,7 +50,7 @@
 //           {" "}
 //           <span className="text-white">Leadership</span>
 //         </h2>
-        
+
 //         <p className="mt-3 sm:mt-4 text-white/50 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-4">
 //           Visionaries driving innovation and excellence in everything we do
 //         </p>
@@ -156,21 +156,12 @@
 //   );
 // }
 
-
-
-
-
-
-
-
-
-
 import { motion } from "framer-motion";
 import { Linkedin, Instagram, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // ✅ Always use the env variable — never hardcode localhost
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function TeamSection() {
   const [team, setTeam] = useState([]);
@@ -197,18 +188,16 @@ export default function TeamSection() {
 
   // Need at least 1 member to render the carousel.
   // Triple the array so the infinite scroll loop never shows a gap.
-  const tripleTeam = safeTeam.length > 0
-    ? [...safeTeam, ...safeTeam, ...safeTeam]
-    : [];
+  const tripleTeam =
+    safeTeam.length > 0 ? [...safeTeam, ...safeTeam, ...safeTeam] : [];
 
   // Width of one card + gap in px — must match the Tailwind classes below
-  const CARD_W  = 280; // w-[280px]
-  const GAP     = 40;  // gap-10 = 2.5rem = 40px
-  const loopPx  = safeTeam.length * (CARD_W + GAP);
+  const CARD_W = 280; // w-[280px]
+  const GAP = 40; // gap-10 = 2.5rem = 40px
+  const loopPx = safeTeam.length * (CARD_W + GAP);
 
   return (
     <section className="relative overflow-hidden bg-black py-12 sm:py-16 md:py-20">
-
       {/* ── Section heading ─────────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -224,7 +213,9 @@ export default function TeamSection() {
           className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-yellow-400/10 border border-yellow-400/20 mb-4 sm:mb-6"
         >
           <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-          <span className="text-yellow-400 text-xs sm:text-sm font-medium">Our Team</span>
+          <span className="text-yellow-400 text-xs sm:text-sm font-medium">
+            Our Team
+          </span>
         </motion.div>
 
         <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-3 sm:mb-4">
@@ -276,14 +267,15 @@ export default function TeamSection() {
                   className="relative h-full"
                 >
                   <div className="relative p-6 rounded-3xl border border-white/10 group-hover:border-yellow-400/30 transition-all duration-500 h-full flex flex-col">
-
                     {/* Avatar */}
                     <div className="relative mx-auto w-40 h-40 mb-5 flex-shrink-0">
                       <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-yellow-400/40">
                         <img
                           src={
                             member.image ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(member.name ?? member.id)}`
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                              member.name ?? member.id
+                            )}`
                           }
                           alt={member.name ?? "Team member"}
                           className="w-full h-full object-cover transition-shadow duration-500 group-hover:shadow-lg"
@@ -309,10 +301,16 @@ export default function TeamSection() {
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={(e) => { if (!member.linkedin || member.linkedin === "#") e.preventDefault(); }}
+                        onClick={(e) => {
+                          if (!member.linkedin || member.linkedin === "#")
+                            e.preventDefault();
+                        }}
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-400/30 text-white/60 hover:text-yellow-400 transition-all duration-300 group/btn"
                       >
-                        <Linkedin size={18} className="group-hover/btn:rotate-12 transition-transform flex-shrink-0" />
+                        <Linkedin
+                          size={18}
+                          className="group-hover/btn:rotate-12 transition-transform flex-shrink-0"
+                        />
                         <span className="text-sm font-medium">LinkedIn</span>
                       </motion.a>
 
@@ -322,10 +320,16 @@ export default function TeamSection() {
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={(e) => { if (!member.instagram || member.instagram === "#") e.preventDefault(); }}
+                        onClick={(e) => {
+                          if (!member.instagram || member.instagram === "#")
+                            e.preventDefault();
+                        }}
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-white/60 hover:text-pink-400 transition-all duration-300 group/btn"
                       >
-                        <Instagram size={18} className="group-hover/btn:rotate-12 transition-transform flex-shrink-0" />
+                        <Instagram
+                          size={18}
+                          className="group-hover/btn:rotate-12 transition-transform flex-shrink-0"
+                        />
                         <span className="text-sm font-medium">Instagram</span>
                       </motion.a>
                     </div>

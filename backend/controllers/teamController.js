@@ -1,26 +1,15 @@
+// Team controller
+import { getDB } from "../config/mongodb.js";
 
-
-
-import supabase from "../services/supabaseClient.js";
-
-export const getTeams = async (req, res) => {
+export async function getTeams(req, res) {
   try {
-    const { data, error } = await supabase
-      .from("team")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) return res.status(400).json({ error: error.message });
-
-    // ✅ Normalise "insta" → "instagram" so the frontend never needs to know
-    //    about the DB column name. One place to fix, everywhere works.
-    const normalised = (data ?? []).map((m) => ({
-      ...m,
-      instagram: m.instagram ?? m.insta ?? null,
-    }));
-
-    res.json(normalised);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    const db = getDB();
+    const teams = db.collection("teams");
+    
+    const data = await teams.find({}).toArray();
+    res.json(data || []);
+  } catch (error) {
+    console.error("Get teams error:", error);
+    res.status(500).json({ error: "Failed to get teams" });
   }
-};
+}

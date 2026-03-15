@@ -1,89 +1,108 @@
-
-
-import {
-  fetchApprovedBlogs,
-  fetchAllBlogs,
-  fetchBlogById,
-  insertBlog,
-  updateBlogStatus,
-} from "../models/blogModel.js"
+import * as blogModel from "../models/blogModel.js";
 
 // GET /api/blogs — public, approved only
-export const getBlogs = async (req, res) => {
+export async function getBlogs(req, res) {
   try {
-    const { data, error } = await fetchApprovedBlogs()
-    if (error) return res.status(500).json({ error: error.message })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
+    const blogs = await blogModel.getBlogsByStatus("approved");
+    res.json(blogs);
+  } catch (error) {
+    console.error("Get blogs error:", error);
+    res.status(500).json({ error: "Failed to get blogs" });
   }
 }
 
 // GET /api/blogs/admin — admin only, all blogs
-export const getAllBlogsAdmin = async (req, res) => {
+export async function getAllBlogsAdmin(req, res) {
   try {
-    const { data, error } = await fetchAllBlogs()
-    if (error) return res.status(500).json({ error: error.message })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
+    const blogs = await blogModel.getAllBlogs();
+    res.json(blogs);
+  } catch (error) {
+    console.error("Get all blogs error:", error);
+    res.status(500).json({ error: "Failed to get blogs" });
   }
 }
 
 // GET /api/blogs/:id — public
-export const getBlogById = async (req, res) => {
+export async function getBlogById(req, res) {
   try {
-    const { data, error } = await fetchBlogById(req.params.id)
-    if (error) return res.status(404).json({ error: "Blog not found" })
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
+    const blog = await blogModel.getBlogById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+    res.json(blog);
+  } catch (error) {
+    console.error("Get blog by ID error:", error);
+    res.status(500).json({ error: "Failed to get blog" });
   }
 }
 
 // POST /api/blogs — authenticated user submits blog (status = pending)
-export const createBlog = async (req, res) => {
+export async function createBlog(req, res) {
   try {
-    const { title, description, content, category, author, links, image } = req.body
+    const { title, description, content, category, image } = req.body;
+    const authorId = req.user.userId;
+    const authorName = req.user.email;
 
-    if (!title || !content || !category || !author) {
-      return res.status(400).json({ error: "Missing required fields" })
+    if (!title || !content || !category) {
+      return res
+        .status(400)
+        .json({ error: "Title, content, and category are required" });
     }
 
-    const blogData = {
+    const blog = await blogModel.createBlog({
       title,
-      description: description || null,
+      description: description || "",
       content,
+      author: authorName,
+      author_id: authorId,
       category,
-      author,
-      links: links || null,
-      image: image || null,
-      status: "pending",           // always starts as pending
-      date: new Date().toISOString().split("T")[0],
-    }
+      image: image || "",
+      status: "pending",
+    });
 
-    const { data, error } = await insertBlog(blogData)
-    if (error) return res.status(400).json({ error: error.message })
-
-    res.status(201).json({ message: "Blog submitted for review", blog: data })
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
+    res.status(201).json({ message: "Blog submitted for review", blog });
+  } catch (error) {
+    console.error("Create blog error:", error);
+    res.status(500).json({ error: "Failed to create blog" });
   }
 }
 
 // PATCH /api/blogs/:id/status — admin only
-export const patchBlogStatus = async (req, res) => {
+export async function patchBlogStatus(req, res) {
   try {
-    const { status } = req.body
+    const { status } = req.body;
+
     if (!["approved", "rejected", "pending"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" })
+      return res.status(400).json({ error: "Invalid status value" });
     }
 
-    const { data, error } = await updateBlogStatus(req.params.id, status)
-    if (error) return res.status(400).json({ error: error.message })
+    await blogModel.updateBlogStatus(req.params.id, status);
 
-    res.json({ message: `Blog ${status}`, blog: data })
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
+    res.json({ message: `Blog ${status}` });
+  } catch (error) {
+    console.error("Update blog status error:", error);
+    res.status(500).json({ error: "Failed to update blog status" });
+  }
+}
+
+// DELETE /api/blogs/:id — admin or author only
+export async function deleteBlog(req, res) {
+  try {
+    await blogModel.deleteBlog(req.params.id);
+    res.json({ message: "Blog deleted successfully" });
+  } catch (error) {
+    console.error("Delete blog error:", error);
+    res.status(500).json({ error: "Failed to delete blog" });
+  }
+}
+
+// GET /api/blogs/user/:userId — get user's blogs
+export async function getUserBlogs(req, res) {
+  try {
+    const blogs = await blogModel.getBlogsByAuthor(req.params.userId);
+    res.json(blogs);
+  } catch (error) {
+    console.error("Get user blogs error:", error);
+    res.status(500).json({ error: "Failed to get user blogs" });
   }
 }

@@ -1,62 +1,109 @@
-
-
 // backend/index.js
 import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import { connectDB, closeDB } from "./config/mongodb.js";
 
-import authRoutes   from "./routes/authRoutes.js";
-import blogRoutes   from "./routes/blogRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import blogRoutes from "./routes/blogRoutes.js";
 import eventsRoutes from "./routes/eventsRoutes.js";
-import teamRoutes   from "./routes/teamRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+// import attendanceRoutes from "./routes/attendanceRoutes.js";
+import galleryRoutes from "./routes/galleryRoutes.js";
+import eventAttendanceRoutes from "./routes/eventAttendanceRoutes.js";
+import newsletterRoutes from "./routes/newsletterRoutes.js";
+import certificateRoutes from "./routes/certificateRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ── CORS ──────────────────────────────────────────────────────────────────────
-// Allow any localhost port in development so you never hit this again
-// when Vite picks 5174, 5175, etc.
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:4173", // vite preview
-  process.env.FRONTEND_URL,          // your production URL from .env
-].filter(Boolean);
+// ── Connect to MongoDB ────────────────────────────────────────────────────────
+async function startServer() {
+  try {
+    await connectDB();
+    console.log("✅ Connected to MongoDB");
+  } catch (error) {
+    console.error("❌ Failed to connect to MongoDB:", error);
+    process.exit(1);
+  }
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // allow requests with no origin (curl, Postman, mobile apps)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-}));
+  // ── CORS ──────────────────────────────────────────────────────────────────────
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:4173",
+    process.env.FRONTEND_URL,
+  ].filter(Boolean);
 
-app.use(express.json());
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      },
+      credentials: true,
+    })
+  );
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.get("/api/health", (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-app.use("/api/auth",   authRoutes);
-app.use("/api/blogs",  blogRoutes);
-app.use("/api/events", eventsRoutes);
-app.use("/api/teams",  teamRoutes);
+  // ── Routes ────────────────────────────────────────────────────────────────────
+  app.get("/api/health", (_, res) =>
+    res.json({ ok: true, ts: new Date().toISOString() })
+  );
 
-// ── 404 ───────────────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
-});
+  app.use("/api/auth", authRoutes);
+  app.use("/api/blogs", blogRoutes);
+  app.use("/api/events", eventsRoutes);
+  app.use("/api/teams", teamRoutes);
+  app.use("/api/students", studentRoutes);
+  // app.use("/api/attendance", attendanceRoutes);
+  app.use("/api/event-attendance", eventAttendanceRoutes);
+  app.use("/api/gallery", galleryRoutes);
+  app.use("/api/newsletters", newsletterRoutes);
+  app.use("/api/certificate", certificateRoutes);
+  app.use("/api/admin", adminRoutes);
 
-// ── Global error handler ──────────────────────────────────────────────────────
-app.use((err, req, res, _next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ error: err.message ?? "Internal server error" });
-});
+  // ── 404 ───────────────────────────────────────────────────────────────────────
+  app.use((req, res) => {
+    res
+      .status(404)
+      .json({ error: `Route not found: ${req.method} ${req.path}` });
+  });
 
-app.listen(PORT, () => {
-  console.log(`✅ Backend running on http://localhost:${PORT}`);
-});
+  // ── Global error handler ──────────────────────────────────────────────────────
+  app.use((err, req, res, _next) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: err.message ?? "Internal server error" });
+  });
+
+  const server = app.listen(PORT, () => {
+    console.log(`✅ Backend running on http://localhost:${PORT}`);
+  });
+
+  // ── Graceful shutdown ─────────────────────────────────────────────────────────
+  process.on("SIGTERM", async () => {
+    console.log("SIGTERM received, closing server...");
+    server.close(async () => {
+      await closeDB();
+      process.exit(0);
+    });
+  });
+
+  process.on("SIGINT", async () => {
+    console.log("SIGINT received, closing server...");
+    server.close(async () => {
+      await closeDB();
+      process.exit(0);
+    });
+  });
+}
+
+startServer();

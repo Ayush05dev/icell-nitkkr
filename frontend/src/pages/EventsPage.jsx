@@ -9,38 +9,10 @@ import {
 } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
+import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
-const API = import.meta.env.VITE_API_URL ?? "";
-
-function getToken() {
-  try {
-    const raw = localStorage.getItem("sb-session");
-    if (raw) {
-      const p = JSON.parse(raw);
-      const t = p?.access_token ?? p?.session?.access_token;
-      if (t) return t;
-    }
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith("sb-") && key.endsWith("-auth-token")) {
-        const val = localStorage.getItem(key);
-        if (!val) continue;
-        const p = JSON.parse(val);
-        const t = p?.access_token ?? p?.session?.access_token ?? p?.currentSession?.access_token;
-        if (t) return t;
-      }
-    }
-    return null;
-  } catch { return null; }
-}
-
-function getCurrentUserId() {
-  try {
-    const raw = localStorage.getItem("sb-session");
-    return raw ? JSON.parse(raw)?.user?.id : null;
-  } catch { return null; }
-}
 
 function normaliseEvent(e) {
   return {
@@ -90,11 +62,8 @@ function EventModal({ event, onClose, certInfo }) {
   async function handleDownload() {
     setDownloading(true); setDlError("");
     try {
-      const res = await fetch(`${API}/api/events/${event.id}/my-certificate`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      if (!res.ok) { const { error } = await res.json(); throw new Error(error ?? "Failed."); }
-      const { signedUrl, fileName } = await res.json();
+      const response = await api.get(`/events/${event.id}/my-certificate`);
+      const { signedUrl, fileName } = response.data;
       const a = document.createElement("a");
       a.href = signedUrl;
       a.download = fileName ?? "certificate.pdf";
@@ -103,7 +72,7 @@ function EventModal({ event, onClose, certInfo }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (err) { setDlError(err.message); }
+    } catch (err) { setDlError(err.response?.data?.error ?? err.message); }
     finally { setDownloading(false); }
   }
 
@@ -364,38 +333,38 @@ export default function EventsPage() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   // { [eventId]: { isParticipant, hasCertificate, participantName } }
   const [certInfoMap,   setCertInfoMap]   = useState({});
-
-  const token  = getToken();
-  const userId = getCurrentUserId();
+  const { user } = useAuth();
 
   // Load events
   useEffect(() => {
-    fetch(`${API}/api/events`)
-      .then(r => r.json())
-      .then(data => setEvents(Array.isArray(data) ? data.map(normaliseEvent) : []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const loadEvents = async () => {
+      try {
+        const response = await api.get("/events");
+        setEvents(Array.isArray(response.data) ? response.data.map(normaliseEvent) : []);
+      } catch (err) {
+        console.error("Failed to load events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEvents();
   }, []);
 
   // For each event, silently check if the logged-in user is a participant
-  // Uses the lightweight /check-my-certificate endpoint (no signed URL generated)
   useEffect(() => {
-    if (!userId || !token || events.length === 0) return;
+    if (!user || events.length === 0) return;
 
     events.forEach(async (event) => {
       try {
-        const res = await fetch(`${API}/api/events/${event.id}/check-my-certificate`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCertInfoMap(prev => ({ ...prev, [event.id]: data }));
+        const response = await api.get(`/events/${event.id}/check-my-certificate`);
+        if (response.status === 200) {
+          setCertInfoMap(prev => ({ ...prev, [event.id]: response.data }));
         }
       } catch {
         // Not a participant or network error — silently ignore
       }
     });
-  }, [events, userId, token]);
+  }, [events, user]);
 
   return (
     <div className="min-h-screen bg-black text-white">

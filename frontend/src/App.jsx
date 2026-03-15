@@ -11,12 +11,17 @@ import BlogDetailPage from "./pages/BlogDetailPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBlogs from "./pages/admin/AdminBlogs";
 import AdminNewsletters from "./pages/admin/AdminNewsletters";
-import AdminTeams from "./pages/admin/AdminTeams";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminGallery from "./pages/admin/AdminGallery";
+import AdminStudents from "./pages/admin/AdminStudents";
+import AdminAttendance from "./pages/admin/AdminAttendance";
 import Login from "./pages/auth/login";
-import Register from "./pages/auth/register";
+import RegisterNew from "./pages/auth/register_new";
+import ProfilePage from "./pages/ProfilePage";
+import MemberProfile from "./pages/profile/MemberProfile";
+import TeamPage from "./pages/TeamPage";
 import { AuthProvider } from "./context/AuthContext";
+import AdminProfile from "./pages/admin/AdminProfile";
 
 export default function App() {
   return (
@@ -94,16 +99,49 @@ export default function App() {
             }
           />
 
+          {/* Team Page */}
+          <Route
+            path="/team"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <TeamPage />
+              </div>
+            }
+          />
+
+          {/* Profile Page */}
+          <Route
+            path="/profile"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <ProfilePage />
+              </div>
+            }
+          />
+
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<RegisterNew />} />
+          <Route path="/register_new" element={<RegisterNew />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/blogs" element={<AdminBlogs />} />
           <Route path="/admin/newsletters" element={<AdminNewsletters />} />
-          <Route path="/admin/teams" element={<AdminTeams />} />
           <Route path="/admin/events" element={<AdminEvents />} />
           <Route path="/admin/gallery" element={<AdminGallery />} />
+          <Route path="/admin/students" element={<AdminStudents />} />
+          <Route path="/admin/attendance" element={<AdminAttendance />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
+          <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

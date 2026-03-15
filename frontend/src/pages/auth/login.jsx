@@ -1,371 +1,12 @@
-
-
-// import React, { useState } from "react";
-// import supabase from "../../services/supabaseClient";
-// import { Mail, Lock, ShieldCheck, Users } from "lucide-react";
-
-// const Login = () => {
-//   const [role, setRole] = useState("member");
-//   const [formData, setFormData] = useState({ email: "", password: "" });
-//   const [error, setError] = useState("");
-//   const [loading, setLoading] = useState(false);
-
-//   const roles = [
-//     { id: "member", label: "Member",  icon: Users       },
-//     { id: "admin",  label: "Admin",   icon: ShieldCheck  },
-//   ];
-
-//   const handleChange = (e) =>
-//     setFormData({ ...formData, [e.target.name]: e.target.value });
-
-//   // const handleSubmit = async (e) => {
-//   //   e.preventDefault();
-//   //   setError("");
-//   //   setLoading(true);
-
-//   //   const { data, error } = await supabase.auth.signInWithPassword({
-//   //     email:    formData.email,
-//   //     password: formData.password,
-//   //   });
-
-//   //   setLoading(false);
-
-//   //   if (error) {
-//   //     setError(error.message);
-//   //     return;
-//   //   }
-
-//   //   // ✅ Save token so WriteBlogPage and AdminBlogs can use it
-//   //   localStorage.setItem("access_token", data.session.access_token);
-//   //   // ✅ Save user info optionally
-//   //   localStorage.setItem("user_id",    data.user.id);
-//   //   localStorage.setItem("user_email", data.user.email);
-
-//   //   console.log("Login success — token saved");
-
-//   //   // Redirect based on role selection
-//   //   // Note: actual role is in profiles table, not just the toggle
-//   //   // For now redirect admin to /admin/blogs, members to /
-//   //   if (role === "admin") {
-//   //     window.location.href = "/admin/blogs";
-//   //   } else {
-//   //     window.location.href = "/";
-//   //   }
-//   // };
-
-
-
-
-
-
-
-
-//   const handleSubmit = async (e) => {
-//   e.preventDefault()
-//   setError("")
-//   setLoading(true)
-
-//   const { data, error } = await supabase.auth.signInWithPassword({
-//     email:    formData.email,
-//     password: formData.password,
-//   })
-
-//   setLoading(false)
-
-//   if (error) {
-//     setError(error.message)
-//     return
-//   }
-
-//   // ✅ These 3 lines are the critical fix
-//   localStorage.setItem("access_token", data.session.access_token)
-//   localStorage.setItem("user_id",      data.user.id)
-//   localStorage.setItem("user_email",   data.user.email)
-
-//   // ✅ Verify it saved correctly
-//   console.log("Token saved to localStorage:", localStorage.getItem("access_token") ? "✓ YES" : "✗ NO")
-
-//   if (role === "admin") {
-//     window.location.href = "/admin/blogs"
-//   } else {
-//     window.location.href = "/"
-//   }
-// }
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-black px-4 py-12">
-//       <div className="w-full max-w-md space-y-8 bg-black/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
-//         <div className="text-center">
-//           <h2 className="text-3xl font-bold text-white tracking-tight">
-//             Welcome Back
-//           </h2>
-//           <p className="mt-2 text-sm text-white/60">
-//             Choose your role to continue
-//           </p>
-//         </div>
-
-//         {/* Role tabs */}
-//         <div className="flex p-1 bg-white/5 rounded-2xl border border-white/5 gap-1">
-//           {roles.map((r) => {
-//             const Icon = r.icon;
-//             const isActive = role === r.id;
-//             return (
-//               <button
-//                 key={r.id}
-//                 onClick={() => setRole(r.id)}
-//                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-300 ${
-//                   isActive
-//                     ? "bg-yellow-400 text-black shadow-lg shadow-yellow-400/20"
-//                     : "text-white/60 hover:text-white hover:bg-white/5"
-//                 }`}
-//               >
-//                 <Icon size={14} />
-//                 {r.label}
-//               </button>
-//             );
-//           })}
-//         </div>
-
-//         {/* Error banner */}
-//         {error && (
-//           <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-//             {error}
-//           </div>
-//         )}
-
-//         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-//           <div className="space-y-4">
-//             <div className="relative group">
-//               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-//                 <Mail size={18} />
-//               </div>
-//               <input
-//                 name="email"
-//                 type="email"
-//                 required
-//                 className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-//                 placeholder="Email address"
-//                 onChange={handleChange}
-//               />
-//             </div>
-//             <div className="relative group">
-//               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-//                 <Lock size={18} />
-//               </div>
-//               <input
-//                 name="password"
-//                 type="password"
-//                 required
-//                 className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-//                 placeholder="Password"
-//                 onChange={handleChange}
-//               />
-//             </div>
-//           </div>
-
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center">
-//               <input
-//                 id="remember-me"
-//                 type="checkbox"
-//                 className="h-4 w-4 text-yellow-500 focus:ring-yellow-400 border-white/10 rounded bg-white/5"
-//               />
-//               <label htmlFor="remember-me" className="ml-2 block text-sm text-white/60">
-//                 Remember me
-//               </label>
-//             </div>
-//             <a href="#" className="text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors">
-//               Forgot password?
-//             </a>
-//           </div>
-
-//           <button
-//             type="submit"
-//             disabled={loading}
-//             className="group cursor-pointer relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             {loading ? "Signing in…" : `Sign in as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
-//           </button>
-
-//           <p className="text-center text-sm text-white/60">
-//             Don't have an account?{" "}
-//             <a href="/register" className="text-yellow-400 font-medium hover:text-yellow-300">
-//               Register now
-//             </a>
-//           </p>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Login;
-
-
-
-
-
-
-
-
-
-// import React, { useState } from "react";
-// import supabase from "../../services/supabaseClient";
-// import { Mail, Lock } from "lucide-react";
-
-// const Login = () => {
-//   const [formData, setFormData] = useState({ email: "", password: "" });
-//   const [error, setError] = useState("");
-//   const [loading, setLoading] = useState(false);
-
-//   const handleChange = (e) =>
-//     setFormData({ ...formData, [e.target.name]: e.target.value });
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setError("");
-//     setLoading(true);
-
-//     const { data, error } = await supabase.auth.signInWithPassword({
-//       email: formData.email,
-//       password: formData.password,
-//     });
-
-//     setLoading(false);
-
-//     if (error) {
-//       setError(error.message);
-//       return;
-//     }
-
-//     // Save token and user info
-//     localStorage.setItem("access_token", data.session.access_token);
-//     localStorage.setItem("user_id", data.user.id);
-//     localStorage.setItem("user_email", data.user.email);
-
-//     // ✅ Check role from Supabase profiles table
-//     const { data: profile, error: profileError } = await supabase
-//       .from("profiles")
-//       .select("role")
-//       .eq("id", data.user.id)
-//       .single();
-
-//     if (profileError) {
-//       console.error("Could not fetch profile:", profileError.message);
-//       window.location.href = "/";
-//       return;
-//     }
-
-//     // ✅ Redirect based on actual role set in Supabase — not a button click
-//     if (profile.role === "admin") {
-//       window.location.href = "/admin/blogs";
-//     } else {
-//       window.location.href = "/";
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-black px-4 py-12">
-//       <div className="w-full max-w-md space-y-8 bg-black/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
-//         <div className="text-center">
-//           <h2 className="text-3xl font-bold text-white tracking-tight">
-//             Welcome Back
-//           </h2>
-//           <p className="mt-2 text-sm text-white/60">
-//             Sign in to your account
-//           </p>
-//         </div>
-
-//         {/* Error banner */}
-//         {error && (
-//           <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-//             {error}
-//           </div>
-//         )}
-
-//         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-//           <div className="space-y-4">
-//             <div className="relative group">
-//               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-//                 <Mail size={18} />
-//               </div>
-//               <input
-//                 name="email"
-//                 type="email"
-//                 required
-//                 className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-//                 placeholder="Email address"
-//                 onChange={handleChange}
-//               />
-//             </div>
-//             <div className="relative group">
-//               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-//                 <Lock size={18} />
-//               </div>
-//               <input
-//                 name="password"
-//                 type="password"
-//                 required
-//                 className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-//                 placeholder="Password"
-//                 onChange={handleChange}
-//               />
-//             </div>
-//           </div>
-
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center">
-//               <input
-//                 id="remember-me"
-//                 type="checkbox"
-//                 className="h-4 w-4 text-yellow-500 focus:ring-yellow-400 border-white/10 rounded bg-white/5"
-//               />
-//               <label htmlFor="remember-me" className="ml-2 block text-sm text-white/60">
-//                 Remember me
-//               </label>
-//             </div>
-//             <a href="#" className="text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors">
-//               Forgot password?
-//             </a>
-//           </div>
-
-//           <button
-//             type="submit"
-//             disabled={loading}
-//             className="group cursor-pointer relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             {loading ? "Signing in…" : "Sign In"}
-//           </button>
-
-//           <p className="text-center text-sm text-white/60">
-//             Don't have an account?{" "}
-//             <a href="/register" className="text-yellow-400 font-medium hover:text-yellow-300">
-//               Register now
-//             </a>
-//           </p>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Login;
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState } from "react";
-import supabase from "../../services/supabaseClient";
 import { Mail, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
-const Login = () => {
+export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -378,136 +19,132 @@ const Login = () => {
     setError("");
     setLoading(true);
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      const result = await login(formData.email, formData.password);
 
-    setLoading(false);
+      if (!result.success) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
 
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
+      // Get updated user to check role
+      const response = await api.get("/auth/profile");
+      const user = response.data;
+      setLoading(false);
 
-    // ✅ Save session in the ONE key that ALL components read from
-    // AdminEvents, authHeaders, getToken() all look for "sb-session"
-    localStorage.setItem(
-      "sb-session",
-      JSON.stringify({
-        access_token:  data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        user:          data.user,
-      })
-    );
-
-    // ✅ Also keep legacy keys so any other page that reads them still works
-    localStorage.setItem("access_token", data.session.access_token);
-    localStorage.setItem("user_id",      data.user.id);
-    localStorage.setItem("user_email",   data.user.email);
-
-    // ✅ Fetch role from profiles table
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
-
-    if (profileError) {
-      console.error("Could not fetch profile:", profileError.message);
-      window.location.href = "/";
-      return;
-    }
-
-    localStorage.setItem("user_role", profile.role);
-
-    if (profile.role === "admin") {
-      window.location.href = "/admin/blogs";
-    } else {
-      window.location.href = "/";
+      // Redirect based on role
+      if (user.role === "admin" || user.role === "post_holder") {
+        navigate("/admin");
+      } else {
+        navigate("/profile");
+      }
+    } catch (err) {
+      setLoading(false);
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4 py-12">
-      <div className="w-full max-w-md space-y-8 bg-black/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] px-4 py-12">
+      <div
+        className="w-full max-w-md space-y-6 bg-[#111111] p-6 rounded-xl border"
+        style={{ borderColor: "#1f1f1f" }}
+      >
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white tracking-tight">
-            Welcome Back
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            Sign In
           </h2>
-          <p className="mt-2 text-sm text-white/60">Sign in to your account</p>
+          <p className="mt-1 text-sm text-[#555]">Access your account</p>
         </div>
 
         {error && (
-          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div
+            className="px-4 py-2 rounded-lg text-sm"
+            style={{
+              background: "#ef444415",
+              borderColor: "#ef444430",
+              color: "#ef4444",
+              border: "1px solid #ef444430",
+            }}
+          >
             {error}
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-                <Mail size={18} />
-              </div>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1.5">
+              Email
+            </label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-3 top-3 text-[#555]" />
               <input
                 name="email"
                 type="email"
                 required
-                className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-                placeholder="Email address"
+                value={formData.email}
                 onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2.5 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="your@email.com"
               />
             </div>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-yellow-400 transition-colors">
-                <Lock size={18} />
-              </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <Lock size={14} className="absolute left-3 top-3 text-[#555]" />
               <input
                 name="password"
                 type="password"
                 required
-                className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400 transition-all"
-                placeholder="Password"
+                value={formData.password}
                 onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2.5 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="••••••••"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-yellow-500 focus:ring-yellow-400 border-white/10 rounded bg-white/5"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-white/60">
-                Remember me
-              </label>
-            </div>
-            <a href="#" className="text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors">
-              Forgot password?
-            </a>
-          </div>
-
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="group cursor-pointer relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-black bg-yellow-400 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 mt-6"
+            style={{
+              background: loading ? "#a855f730" : "#a855f740",
+              color: "#a855f7",
+              border: "1px solid #a855f730",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.target.style.background = "#a855f750";
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.target.style.background = "#a855f740";
+            }}
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-sm text-white/60">
+          {/* Register Link */}
+          <p className="text-center text-xs text-[#555]">
             Don't have an account?{" "}
-            <a href="/register" className="text-yellow-400 font-medium hover:text-yellow-300">
-              Register now
-            </a>
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-purple-400 font-medium hover:text-purple-300 transition-colors"
+            >
+              Register
+            </button>
           </p>
         </form>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

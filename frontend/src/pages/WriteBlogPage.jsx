@@ -473,7 +473,8 @@
 
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import supabase from "../services/supabaseClient";  // ← ADD THIS IMPORT
+import api from "../services/api";
+
 
 const CATEGORIES = [
   "Finance", "Technology", "Startup", "Design",
@@ -562,34 +563,14 @@ export default function WriteBlogPage() {
     handleImage(e.dataTransfer.files[0]);
   };
 
-  // ── Upload image to Supabase Storage, return public URL ───────────────────
-  const uploadImageToSupabase = async (file) => {
-    // Create a unique filename: timestamp + original name
-    const fileExt  = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-    const filePath = `blog-covers/${fileName}`;
-
-    setImageUploading(true);
-
-    const { error: uploadError } = await supabase.storage
-      .from("blog-images")          // ← your bucket name
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    setImageUploading(false);
-
-    if (uploadError) {
-      throw new Error("Image upload failed: " + uploadError.message);
-    }
-
-    // Get the public URL
-    const { data } = supabase.storage
-      .from("blog-images")
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;   // e.g. https://xxx.supabase.co/storage/v1/object/public/blog-images/blog-covers/123.jpg
+  // ── Upload image to local storage (base64) ───────────────────────────────
+  const uploadImageAsBase64 = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   // ── Toolbar ───────────────────────────────────────────────────────────────
@@ -646,16 +627,14 @@ export default function WriteBlogPage() {
     setLoading(true);
 
     try {
-      // ── Step A: upload image first if one was selected ──────────────────
+      // ── Step A: convert image to base64 if one was selected ──────────────
       let imageUrl = null;
 
       if (imageFile) {
-        imageUrl = await uploadImageToSupabase(imageFile);
-        // imageUrl is now a permanent public URL like:
-        // https://xxx.supabase.co/storage/v1/object/public/blog-images/blog-covers/abc.jpg
+        imageUrl = await uploadImageAsBase64(imageFile);
       }
 
-      // ── Step B: send blog data to your backend ───────────────────────────
+      // ── Step B: send blog data to backend ──────────────────────────────
       const payload = {
         title:       form.title,
         author:      form.author,
@@ -663,28 +642,13 @@ export default function WriteBlogPage() {
         description: form.description || "",
         content:     form.content,
         links:       form.links || "",
-        image:       imageUrl,   // ← public URL string, not base64
+        image:       imageUrl,   // ← base64 data URL
       };
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/blogs`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
-
+      const response = await api.post("/blogs", payload);
       setSubmitted(true);
-
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message || "Submission failed");
     } finally {
       setLoading(false);
     }

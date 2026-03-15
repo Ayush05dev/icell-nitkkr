@@ -1,81 +1,334 @@
-
-
-// authController.js
+import * as authModel from "../models/authModel.js";
 import {
-  createAuthUser,
-  insertUserProfile,
-  loginUser
-} from "../models/authModel.js";
+  generateToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
 
-export const signup = async (req, res) => {
-  // include the new fields from the request body
-  const {
-    name,
-    email,
-    password,
-    is_member,
-    branch,
-    year,
-    roll_number
-  } = req.body;
-
+// Register
+export async function register(req, res) {
   try {
-    // create auth user (Supabase admin.createUser or similar) – unchanged
-    const { data, error } = await createAuthUser(email, password);
+    const { email, password, name, phone, branch, year } = req.body;
 
-    if (error) {
-      return res.status(400).json({ error: error.message });
+    if (!email || !password || !name) {
+      return res
+        .status(400)
+        .json({ error: "Email, password, and name are required" });
     }
 
-    const user = data.user;
-
-    // insert base profile plus optional member details
-    // adjust insertUserProfile implementation to accept the new fields
-    const { error: profileError } = await insertUserProfile(
-      user.id,
-      name,
+    const user = await authModel.createUser(
       email,
-      is_member ? true : false,   // ensure boolean
-      branch || null,
-      year || null,
-      roll_number || null
+      password,
+      name,
+      phone,
+      branch,
+      year
     );
 
-    if (profileError) {
-      // log but still send a clear response
-      console.error("Profile insert/update error:", profileError.message);
-      return res.status(400).json({ error: profileError.message });
+    const accessToken = generateToken(user.id, user.email, "member");
+    const refreshToken = generateRefreshToken(user.id);
+
+    res.status(201).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: "member",
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(400).json({ error: error.message });
+  }
+}
+
+// Login
+export async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
     }
 
-    return res.status(201).json({
-      message: "User created successfully",
-      user
+    const user = await authModel.getUserByEmail(email);
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const isPasswordValid = await authModel.verifyPassword(
+      password,
+      user.password
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const accessToken = generateToken(user._id, user.email, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+
+    res.json({
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
     });
-
-  } catch (err) {
-    console.error("Signup controller error:", err);
-    return res.status(500).json({ error: "Server error" });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed" });
   }
-};
+}
 
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-
+// Refresh token
+export async function refreshToken(req, res) {
   try {
-    const { data, error } = await loginUser(email, password);
+    const { refresh_token } = req.body;
 
-    if (error) {
+    if (!refresh_token) {
+      return res.status(400).json({ error: "Refresh token is required" });
+    }
+
+    const payload = verifyRefreshToken(refresh_token);
+
+    if (!payload) {
+      return res.status(401).json({ error: "Invalid refresh token" });
+    }
+
+    const user = await authModel.getUserById(payload.userId);
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const newAccessToken = generateToken(user._id, user.email, user.role);
+
+    res.json({
+      access_token: newAccessToken,
+    });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    res.status(401).json({ error: "Token refresh failed" });
+  }
+}
+
+// Get user profile
+export async function getProfile(req, res) {
+  try {
+    const userId = req.user.userId;
+    const user = await authModel.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      branch: user.branch,
+      year: user.year,
+      role: user.role,
+      is_member: user.is_member,
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    res.status(500).json({ error: "Failed to get profile" });
+  }
+}
+
+// Update user profile
+export async function updateProfile(req, res) {
+  try {
+    const userId = req.user.userId;
+    const { name, phone, branch, year, roll_number } = req.body;
+
+    const updates = {};
+    if (name) updates.name = name;
+    if (phone) updates.phone = phone;
+    if (branch) updates.branch = branch;
+    if (year) updates.year = year;
+    if (roll_number) updates.roll_number = roll_number;
+
+    await authModel.updateUserProfile(userId, updates);
+
+    res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+}
+
+// Get all students
+export async function getAllStudents(req, res) {
+  try {
+    const students = await authModel.getAllStudents();
+    res.json(students);
+  } catch (error) {
+    console.error("Get students error:", error);
+    res.status(500).json({ error: "Failed to get students" });
+  }
+}
+
+// Get students by filter
+export async function getStudentsByFilter(req, res) {
+  try {
+    const { branch, year } = req.query;
+    const students = await authModel.getStudentsByFilter(branch, year);
+    res.json(students);
+  } catch (error) {
+    console.error("Filter students error:", error);
+    res.status(500).json({ error: "Failed to filter students" });
+  }
+}
+
+// Promote student
+export async function promoteStudent(req, res) {
+  try {
+    const { studentId, newRole } = req.body;
+
+    if (!studentId || !newRole) {
+      return res
+        .status(400)
+        .json({ error: "Student ID and role are required" });
+    }
+
+    await authModel.promoteStudent(studentId, newRole);
+
+    res.json({ message: "Student promoted successfully" });
+  } catch (error) {
+    console.error("Promote student error:", error);
+    res.status(500).json({ error: "Failed to promote student" });
+  }
+}
+
+// Get user attendance
+export async function getAttendance(req, res) {
+  try {
+    const userId = req.user.userId;
+
+    // Return real attendance data from database
+    // For now, return empty array as no attendance records exist yet
+    // In production, this would query the attendance collection
+    const attendanceRecords = [];
+
+    res.json(attendanceRecords);
+  } catch (error) {
+    console.error("Get attendance error:", error);
+    res.status(500).json({ error: "Failed to get attendance" });
+  }
+}
+
+// Admin setup - only works if no admin exists
+export async function setupAdmin(req, res) {
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Check if admin already exists
+    const adminExists = await authModel.checkAdminExists();
+    if (adminExists) {
+      return res.status(400).json({
+        error: "Admin already exists. Contact existing admin for changes.",
+      });
+    }
+
+    // Create admin
+    const admin = await authModel.createAdmin(email, password, name || "Admin");
+
+    const accessToken = generateToken(admin.id, admin.email, "admin");
+    const refreshToken = generateRefreshToken(admin.id);
+
+    res.status(201).json({
+      user: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: "admin",
+      },
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      message: "Admin created successfully",
+    });
+  } catch (error) {
+    console.error("Admin setup error:", error);
+    res.status(500).json({ error: error.message || "Failed to setup admin" });
+  }
+}
+// Add a new student manually (Admin only)
+export async function addStudent(req, res) {
+  try {
+    const { name, email, password, branch, year, roll_number } = req.body;
+
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Name, email, and password are required" });
+    }
+
+    // Reuse your existing createUser function from the model
+    // Note: createUser doesn't take roll_number yet, so we will update the profile right after creation
+    const newUser = await authModel.createUser(
+      email,
+      password,
+      name,
+      "", // phone
+      branch,
+      year
+    );
+
+    // If a roll number was provided, update the newly created profile
+    if (roll_number) {
+      await authModel.updateUserProfile(newUser.id, { roll_number });
+    }
+
+    res
+      .status(201)
+      .json({ message: "Student added successfully", student: newUser });
+  } catch (error) {
+    console.error("Add student error:", error);
+    // If it's the "User already exists" error from the model, send a 400
+    if (error.message === "User already exists") {
       return res.status(400).json({ error: error.message });
     }
-
-    return res.json({
-      message: "Login successful",
-      session: data.session,
-      user: data.user
-    });
-
-  } catch (err) {
-    console.error("Login controller error:", err);
-    return res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Failed to add student" });
   }
-};
+}
+
+// Delete a student (Admin only)
+export async function deleteStudent(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Prevent deleting yourself
+    if (id === req.user?.id) {
+      return res
+        .status(400)
+        .json({ error: "You cannot delete your own account." });
+    }
+
+    const deleted = await authModel.deleteStudentProfile(id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    res.json({ message: "Student deleted successfully" });
+  } catch (error) {
+    console.error("Delete student error:", error);
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to delete student" });
+  }
+}

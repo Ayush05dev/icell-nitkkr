@@ -1,0 +1,273 @@
+import React, { useState } from "react";
+import { Mail, Lock, User, Phone, BookOpen, GraduationCap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+export default function Register() {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    branch: "",
+    year: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const branches = ["CSE", "ECE", "ME", "CE", "EE", "IT", "BT"];
+  const years = ["1", "2", "3", "4"];
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await register(
+        formData.email,
+        formData.password,
+        formData.name,
+        formData.phone,
+        formData.branch,
+        formData.year
+      );
+
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => navigate("/profile"), 2000);
+      } else {
+        setError(result.error || "Registration failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d]">
+        <div
+          className="p-6 rounded-xl border text-center max-w-sm"
+          style={{
+            background: "#111111",
+            borderColor: "#10b98130",
+          }}
+        >
+          <div className="text-3xl mb-3">✓</div>
+          <h2 className="text-xl font-bold text-white mb-2">
+            Registration Successful!
+          </h2>
+          <p className="text-sm text-[#555]">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d] px-4 py-12">
+      <div
+        className="w-full max-w-md space-y-6 bg-[#111111] p-6 rounded-xl border"
+        style={{ borderColor: "#1f1f1f" }}
+      >
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            Create Account
+          </h2>
+          <p className="mt-1 text-sm text-[#555]">Join the iCell community</p>
+        </div>
+
+        {error && (
+          <div
+            className="px-4 py-2 rounded-lg text-sm"
+            style={{
+              background: "#ef444415",
+              borderColor: "#ef444430",
+              color: "#ef4444",
+              border: "1px solid #ef444430",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <form className="space-y-3" onSubmit={handleSubmit}>
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1">
+              Full Name
+            </label>
+            <div className="relative">
+              <User size={14} className="absolute left-3 top-3 text-[#555]" />
+              <input
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500"
+                placeholder="Full name"
+              />
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1">
+              Email
+            </label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-3 top-3 text-[#555]" />
+              <input
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500"
+                placeholder="your@email.com"
+              />
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1">
+              Phone
+            </label>
+            <div className="relative">
+              <Phone size={14} className="absolute left-3 top-3 text-[#555]" />
+              <input
+                name="phone"
+                type="tel"
+                required
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500"
+                placeholder="+91 9876543210"
+              />
+            </div>
+          </div>
+
+          {/* Branch & Year - Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Branch */}
+            <div>
+              <label className="block text-xs font-medium text-white mb-1">
+                Branch
+              </label>
+              <div className="relative">
+                <BookOpen
+                  size={14}
+                  className="absolute left-3 top-3 text-[#555]"
+                />
+                <select
+                  name="branch"
+                  required
+                  value={formData.branch}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
+                >
+                  <option value="">Select</option>
+                  {branches.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Year */}
+            <div>
+              <label className="block text-xs font-medium text-white mb-1">
+                Year
+              </label>
+              <div className="relative">
+                <GraduationCap
+                  size={14}
+                  className="absolute left-3 top-3 text-[#555]"
+                />
+                <select
+                  name="year"
+                  required
+                  value={formData.year}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
+                >
+                  <option value="">Select</option>
+                  {years.map((y) => (
+                    <option key={y} value={y}>
+                      Year {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-xs font-medium text-white mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <Lock size={14} className="absolute left-3 top-3 text-[#555]" />
+              <input
+                name="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500"
+                placeholder="Min 8 characters"
+                minLength="8"
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 mt-4"
+            style={{
+              background: loading ? "#a855f730" : "#a855f740",
+              color: "#a855f7",
+              border: "1px solid #a855f730",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.target.style.background = "#a855f750";
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.target.style.background = "#a855f740";
+            }}
+          >
+            {loading ? "Creating..." : "Register"}
+          </button>
+
+          {/* Login Link */}
+          <p className="text-center text-xs text-[#555]">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="text-purple-400 font-medium hover:text-purple-300"
+            >
+              Sign In
+            </button>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}

@@ -2,6 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Footer from "../components/layout/Footer";
+import api from "../services/api";
 
 // ── Inline text renderer: handles **bold** and _italic_ ──────────────────────
 function renderInline(text) {
@@ -224,14 +225,11 @@ export default function BlogDetailPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/blogs/${id}`);
-        if (!res.ok) throw new Error("Not found");
-        const data = await res.json();
-        setBlog(data);
+        const response = await api.get(`/blogs/${id}`);
+        setBlog(response.data);
 
-        const allRes  = await fetch("http://localhost:5000/api/blogs");
-        const allData = await allRes.json();
-        setAllBlogs(Array.isArray(allData) ? allData : []);
+        const allResponse = await api.get("/blogs");
+        setAllBlogs(Array.isArray(allResponse.data) ? allResponse.data : []);
       } catch (err) {
         console.error(err);
         setBlog(null);
