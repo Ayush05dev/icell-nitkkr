@@ -9,6 +9,18 @@ import { sendVerificationEmail } from "../utils/emailService.js";
 
 const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
 const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+const EMAIL_SEND_TIMEOUT_MS = Number(process.env.EMAIL_SEND_TIMEOUT_MS || 15000);
+
+function withTimeout(promise, timeoutMs) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Email service timeout"));
+      }, timeoutMs);
+    }),
+  ]);
+}
 
 function getBackendPublicUrl() {
   return (
@@ -63,7 +75,10 @@ export async function register(req, res) {
     );
 
     const verificationLink = `${getBackendPublicUrl()}/api/auth/verify-email?token=${verificationToken}`;
-    await sendVerificationEmail(user.email, user.name, verificationLink);
+    await withTimeout(
+      sendVerificationEmail(user.email, user.name, verificationLink),
+      EMAIL_SEND_TIMEOUT_MS
+    );
 
     res.status(201).json({
       message:
@@ -71,6 +86,12 @@ export async function register(req, res) {
     });
   } catch (error) {
     console.error("Register error:", error);
+    if (error.message === "Email service timeout") {
+      return res.status(503).json({
+        error:
+          "Email server is taking too long. Please try registration again in a moment.",
+      });
+    }
     res.status(400).json({ error: error.message });
   }
 }

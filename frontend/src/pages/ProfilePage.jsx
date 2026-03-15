@@ -146,7 +146,7 @@ export default function ProfilePage() {
             >
               {/* Avatar & Name */}
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-4">
                   <User size={40} className="text-white" />
                 </div>
                 <h2 className="text-xl font-bold mb-1">
@@ -237,7 +237,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="w-full h-1.5 bg-[#1f1f1f] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                        className="h-full bg-linear-to-r from-cyan-500 to-blue-500"
                         style={{
                           width: `${Math.min(
                             100,

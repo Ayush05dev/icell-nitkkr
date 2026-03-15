@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -41,13 +40,14 @@ export default function Login() {
         return;
       }
 
-      // Get updated user to check role
-      const response = await api.get("/auth/profile");
-      const user = response.data;
+      const loggedInUser = result.user;
       setLoading(false);
 
       // Redirect based on role
-      if (user.role === "admin" || user.role === "post_holder") {
+      if (
+        loggedInUser?.role === "admin" ||
+        loggedInUser?.role === "post_holder"
+      ) {
         navigate("/admin");
       } else {
         navigate("/profile");
