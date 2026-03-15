@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Mail, Lock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "1") {
+      setInfo("Email verified successfully. You can now sign in.");
+    } else if (verified === "0") {
+      setInfo(
+        "Verification link is invalid or expired. Please register again."
+      );
+    }
+  }, [searchParams]);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -70,6 +83,20 @@ export default function Login() {
             }}
           >
             {error}
+          </div>
+        )}
+
+        {info && (
+          <div
+            className="px-4 py-2 rounded-lg text-sm"
+            style={{
+              background: "#10b98115",
+              borderColor: "#10b98130",
+              color: "#10b981",
+              border: "1px solid #10b98130",
+            }}
+          >
+            {info}
           </div>
         )}
 

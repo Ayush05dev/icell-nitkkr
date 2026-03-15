@@ -3,7 +3,7 @@
 /**
  * Blog Seeder Script
  * Run this script to populate the database with 10 sample blogs
- * Usage: node seed-blogs.js
+ * Usage: node seedBlogs.js
  */
 
 import dotenv from "dotenv";

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
+  const nitkkrEmailRegex = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export default function Register() {
     year: "",
   });
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +31,12 @@ export default function Register() {
     setError("");
     setLoading(true);
 
+    if (!nitkkrEmailRegex.test(formData.email)) {
+      setError("Only @nitkkr.ac.in email addresses are allowed.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await register(
         formData.email,
@@ -40,8 +48,12 @@ export default function Register() {
       );
 
       if (result.success) {
+        setSuccessMessage(
+          result.message ||
+            "Registration successful. Check your inbox for the verification link."
+        );
         setSuccess(true);
-        setTimeout(() => navigate("/profile"), 2000);
+        setTimeout(() => navigate("/login"), 2500);
       } else {
         setError(result.error || "Registration failed. Please try again.");
       }
@@ -67,7 +79,7 @@ export default function Register() {
           <h2 className="text-xl font-bold text-white mb-2">
             Registration Successful!
           </h2>
-          <p className="text-sm text-[#555]">Redirecting to login...</p>
+          <p className="text-sm text-[#555]">{successMessage}</p>
         </div>
       </div>
     );

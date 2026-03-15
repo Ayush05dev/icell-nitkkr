@@ -12,6 +12,7 @@ import {
   addStudent,
   deleteStudent,
   setupAdmin,
+  verifyEmail,
 } from "../controllers/authController.js";
 import verifyUser, { requireAdmin } from "../middleware/authMiddleware.js";
 
@@ -22,6 +23,7 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/refresh-token", refreshToken);
 router.post("/setup-admin", setupAdmin);
+router.get("/verify-email", verifyEmail);
 
 // Protected routes
 router.get("/profile", verifyUser, getProfile);

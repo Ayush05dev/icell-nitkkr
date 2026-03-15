@@ -29,6 +29,9 @@ export async function createUser(email, password, name, phone, branch, year) {
     roll_number: "",
     role: "member",
     is_member: true,
+    email_verified: false,
+    verification_token_hash: null,
+    verification_token_expires_at: null,
     created_at: new Date(),
     updated_at: new Date(),
   };
@@ -166,6 +169,9 @@ export async function createAdmin(email, password, name = "Admin") {
     roll_number: "",
     role: "admin",
     is_member: false,
+    email_verified: true,
+    verification_token_hash: null,
+    verification_token_expires_at: null,
     created_at: new Date(),
     updated_at: new Date(),
   };
@@ -186,4 +192,48 @@ export async function deleteStudentProfile(studentId) {
 
   const result = await profiles.deleteOne({ _id: studentId });
   return result.deletedCount > 0;
+}
+
+export async function saveEmailVerificationToken(userId, tokenHash, expiresAt) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const result = await profiles.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        verification_token_hash: tokenHash,
+        verification_token_expires_at: expiresAt,
+        updated_at: new Date(),
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
+}
+
+export async function verifyEmailByTokenHash(tokenHash) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const now = new Date();
+  const result = await profiles.updateOne(
+    {
+      verification_token_hash: tokenHash,
+      verification_token_expires_at: { $gt: now },
+      email_verified: { $ne: true },
+    },
+    {
+      $set: {
+        email_verified: true,
+        updated_at: now,
+      },
+      $unset: {
+        verification_token_hash: "",
+        verification_token_expires_at: "",
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
 }
