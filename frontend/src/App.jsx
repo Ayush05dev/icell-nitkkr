@@ -18,7 +18,7 @@ import AdminAttendance from "./pages/admin/AdminAttendance";
 import Login from "./pages/auth/login";
 import RegisterNew from "./pages/auth/register_new";
 import ProfilePage from "./pages/ProfilePage";
-import MemberProfile from "./pages/profile/MemberProfile";
+import MemberProfile from "./pages/Profile/MemberProfile";
 import TeamPage from "./pages/TeamPage";
 import { AuthProvider } from "./context/AuthContext";
 import AdminProfile from "./pages/admin/AdminProfile";
