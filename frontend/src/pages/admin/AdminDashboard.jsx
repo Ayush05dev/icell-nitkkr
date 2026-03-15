@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import {
   Users,
@@ -11,8 +12,6 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -32,24 +31,11 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken");
-        const response = await fetch(`http://localhost:5000/api/admin/stats`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch stats");
-        }
-
-        const data = await response.json();
-        setStats(data);
+        const response = await api.get("/admin/stats");
+        setStats(response.data);
       } catch (err) {
         console.error("Error fetching stats:", err);
-        setError(err.message);
+        setError(err.response?.data?.error || err.message);
       } finally {
         setLoading(false);
       }
