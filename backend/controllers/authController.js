@@ -1,9 +1,25 @@
 import * as authModel from "../models/authModel.js";
+import crypto from "crypto";
 import {
   generateToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
+import { sendVerificationEmail } from "../utils/emailService.js";
+
+const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
+const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+function getBackendPublicUrl() {
+  return (
+    process.env.BACKEND_PUBLIC_URL ||
+    `http://localhost:${process.env.PORT || 5000}`
+  );
+}
+
+function getFrontendUrl() {
+  return process.env.FRONTEND_URL || "http://localhost:5173";
+}
 
 // Register
 export async function register(req, res) {
@@ -16,6 +32,12 @@ export async function register(req, res) {
         .json({ error: "Email, password, and name are required" });
     }
 
+    if (!NITKKR_EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        error: "Only @nitkkr.ac.in email addresses are allowed",
+      });
+    }
+
     const user = await authModel.createUser(
       email,
       password,
@@ -25,18 +47,27 @@ export async function register(req, res) {
       year
     );
 
-    const accessToken = generateToken(user.id, user.email, "member");
-    const refreshToken = generateRefreshToken(user.id);
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+    const verificationTokenExpiry = new Date(
+      Date.now() + EMAIL_VERIFICATION_TOKEN_EXPIRY_MS
+    );
+
+    await authModel.saveEmailVerificationToken(
+      user.id,
+      verificationTokenHash,
+      verificationTokenExpiry
+    );
+
+    const verificationLink = `${getBackendPublicUrl()}/api/auth/verify-email?token=${verificationToken}`;
+    await sendVerificationEmail(user.email, user.name, verificationLink);
 
     res.status(201).json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: "member",
-      },
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      message:
+        "Registration successful. Please verify your email from the link sent to your inbox.",
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -68,6 +99,12 @@ export async function login(req, res) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    if (!user.email_verified) {
+      return res.status(403).json({
+        error: "Please verify your email before logging in",
+      });
+    }
+
     const accessToken = generateToken(user._id, user.email, user.role);
     const refreshToken = generateRefreshToken(user._id);
 
@@ -84,6 +121,29 @@ export async function login(req, res) {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Login failed" });
+  }
+}
+
+export async function verifyEmail(req, res) {
+  try {
+    const { token } = req.query;
+    const frontendUrl = getFrontendUrl();
+
+    if (!token) {
+      return res.redirect(`${frontendUrl}/login?verified=0`);
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const updatedUser = await authModel.verifyEmailByTokenHash(tokenHash);
+
+    if (!updatedUser) {
+      return res.redirect(`${frontendUrl}/login?verified=0`);
+    }
+
+    return res.redirect(`${frontendUrl}/login?verified=1`);
+  } catch (error) {
+    console.error("Verify email error:", error);
+    return res.redirect(`${getFrontendUrl()}/login?verified=0`);
   }
 }
 
@@ -138,6 +198,7 @@ export async function getProfile(req, res) {
       year: user.year,
       role: user.role,
       is_member: user.is_member,
+      email_verified: user.email_verified === true,
     });
   } catch (error) {
     console.error("Get profile error:", error);

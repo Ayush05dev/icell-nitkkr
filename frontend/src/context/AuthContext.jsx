@@ -39,7 +39,8 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.message || "Login failed";
+      const errorMsg =
+        error.response?.data?.error || error.message || "Login failed";
       return { success: false, error: errorMsg };
     }
   };
@@ -62,15 +63,15 @@ export const AuthProvider = ({ children }) => {
         year,
       });
 
-      const data = response.data;
-      localStorage.setItem("accessToken", data.access_token);
-      localStorage.setItem("refreshToken", data.refresh_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
-
-      return { success: true };
+      return {
+        success: true,
+        message:
+          response.data?.message ||
+          "Registration successful. Please verify your email before login.",
+      };
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.message || "Registration failed";
+      const errorMsg =
+        error.response?.data?.error || error.message || "Registration failed";
       return { success: false, error: errorMsg };
     }
   };

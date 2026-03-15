@@ -32,7 +32,7 @@ async function setupAdmin() {
     }
 
     // Create admin account
-    const email = "nav@gmail.com";
+    const email = "nav@nitkkr.ac.in";
     const password = "12345678";
     const name = "Admin";
 
