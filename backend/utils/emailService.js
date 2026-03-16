@@ -1,72 +1,230 @@
-import nodemailer from "nodemailer";
+import Mailjet from "node-mailjet";
 
-function getSmtpConfig() {
-  return {
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: String(process.env.SMTP_SECURE || "false") === "true",
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
-    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000),
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 15000),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  };
-}
+// Initialize Mailjet client
+function getMailjetClient() {
+  const apiKey = process.env.MAILJET_API_KEY;
+  const apiSecret = process.env.MAILJET_API_SECRET;
 
-function getFromEmail() {
-  return process.env.SMTP_FROM || process.env.SMTP_USER;
-}
-
-function createTransporter() {
-  const smtpConfig = getSmtpConfig();
-
-  if (!smtpConfig.host || !smtpConfig.auth.user || !smtpConfig.auth.pass) {
+  if (!apiKey || !apiSecret) {
     throw new Error(
-      "SMTP is not configured. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in backend .env"
+      "Mailjet API credentials not configured. Set MAILJET_API_KEY and MAILJET_API_SECRET in environment variables."
     );
   }
 
-  return nodemailer.createTransport(smtpConfig);
+  return Mailjet.apiConnect(apiKey, apiSecret);
 }
 
+/**
+ * Send email verification email to user
+ * @param {string} recipientEmail - Email address of the recipient
+ * @param {string} recipientName - Name of the recipient
+ * @param {string} verificationLink - Verification link to include in email
+ * @returns {Promise<void>}
+ */
 export async function sendVerificationEmail(
-  toEmail,
-  userName,
+  recipientEmail,
+  recipientName,
   verificationLink
 ) {
-  const transporter = createTransporter();
-  const from = getFromEmail();
+  try {
+    const mailjet = getMailjetClient();
+    const senderEmail =
+      process.env.MAILJET_FROM_EMAIL ||
+      process.env.SMTP_FROM ||
+      "noreply@nitkkr.ac.in";
+    const senderName = process.env.MAILJET_FROM_NAME || "NITKKR";
 
-  await transporter.sendMail({
-    from,
-    to: toEmail,
-    subject: "Verify your iCell account email",
-    html: `
-      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-        <h2>Email verification</h2>
-        <p>Hi ${userName || "there"},</p>
-        <p>Thanks for registering with iCell. Please verify your email by clicking the button below:</p>
-        <p>
-          <a
-            href="${verificationLink}"
-            style="display: inline-block; padding: 10px 16px; background: #7c3aed; color: #fff; text-decoration: none; border-radius: 6px;"
-          >
-            Verify Email
-          </a>
-        </p>
-        <p>If the button does not work, use this link:</p>
-        <p><a href="${verificationLink}">${verificationLink}</a></p>
-        <p>This link expires in 24 hours.</p>
-      </div>
-    `,
-    text: `Hi ${
-      userName || "there"
-    },\n\nPlease verify your email by opening this link:\n${verificationLink}\n\nThis link expires in 24 hours.`,
-  });
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+          }
+          .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+          }
+          .content {
+            background-color: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+          }
+          .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+          }
+          .button:hover {
+            background-color: #2980b9;
+          }
+          .footer {
+            background-color: #f0f0f0;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-radius: 0 0 5px 5px;
+          }
+          .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Welcome to NITKKR!</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${recipientName}</strong>,</p>
+            
+            <p>Thank you for registering with NITKKR. To complete your registration, please verify your email address by clicking the button below:</p>
+            
+            <center>
+              <a href="${verificationLink}" class="button">Verify Email Address</a>
+            </center>
+            
+            <p>Or copy and paste this link in your browser:</p>
+            <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 3px;">
+              ${verificationLink}
+            </p>
+            
+            <div class="warning">
+              <strong>Note:</strong> This link will expire in 24 hours. If you did not create this account, please ignore this email.
+            </div>
+            
+            <p>Once you verify your email, you'll be able to log in and access all features of the NITKKR platform.</p>
+            
+            <p>Best regards,<br>NITKKR Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2024 NIT Kurukshetra. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply to this message.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+      Welcome to NITKKR!
+      
+      Hi ${recipientName},
+      
+      Thank you for registering with NITKKR. To complete your registration, please verify your email address by visiting the following link:
+      
+      ${verificationLink}
+      
+      This link will expire in 24 hours. If you did not create this account, please ignore this email.
+      
+      Once you verify your email, you'll be able to log in and access all features of the NITKKR platform.
+      
+      Best regards,
+      NITKKR Team
+    `;
+
+    const response = await mailjet.post("send", { version: "v3.1" }).request({
+      Messages: [
+        {
+          From: {
+            Email: senderEmail,
+            Name: senderName,
+          },
+          To: [
+            {
+              Email: recipientEmail,
+              Name: recipientName,
+            },
+          ],
+          Subject: "Verify Your NITKKR Email Address",
+          HTMLPart: htmlContent,
+          TextPart: textContent,
+        },
+      ],
+    });
+
+    console.log("Email sent successfully via Mailjet:", {
+      messageId: response.body.Messages[0].MessageID,
+      to: recipientEmail,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error sending email via Mailjet:", error);
+    throw new Error(`Failed to send verification email: ${error.message}`);
+  }
 }
 
-export default {
-  sendVerificationEmail,
-};
+/**
+ * Send a generic email (for future use)
+ * @param {object} options - Email options
+ * @returns {Promise<void>}
+ */
+export async function sendEmail({
+  to,
+  subject,
+  htmlContent,
+  textContent,
+  fromEmail,
+  fromName,
+}) {
+  try {
+    const mailjet = getMailjetClient();
+    const senderEmail =
+      fromEmail ||
+      process.env.MAILJET_FROM_EMAIL ||
+      process.env.SMTP_FROM ||
+      "noreply@nitkkr.ac.in";
+    const senderName = fromName || process.env.MAILJET_FROM_NAME || "NITKKR";
+
+    const response = await mailjet.post("send", { version: "v3.1" }).request({
+      Messages: [
+        {
+          From: {
+            Email: senderEmail,
+            Name: senderName,
+          },
+          To: Array.isArray(to)
+            ? to.map((email) => ({ Email: email }))
+            : [{ Email: to }],
+          Subject: subject,
+          HTMLPart: htmlContent,
+          TextPart: textContent,
+        },
+      ],
+    });
+
+    console.log("Generic email sent successfully via Mailjet:", {
+      messageId: response.body.Messages[0].MessageID,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error sending generic email via Mailjet:", error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+}
