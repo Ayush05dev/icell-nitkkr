@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Award,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -46,6 +47,12 @@ const adminLinks = [
     icon: Clock,
     path: "/admin/attendance",
     color: "#0ea5e9",
+  },
+  {
+    label: "Certificates",
+    icon: Award,
+    path: "/admin/certificates",
+    color: "#f59e0b",
   },
   {
     label: "Blogs",

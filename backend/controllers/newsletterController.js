@@ -44,7 +44,7 @@ export const createNewsletter = async (req, res) => {
       file_url,
       file_size: file_size || null,
       downloads: 0,
-      uploaded_by: req.user.id,
+      uploaded_by: req.user.userId,
       created_at: new Date().toISOString(),
     };
 

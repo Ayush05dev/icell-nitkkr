@@ -121,6 +121,14 @@ export default function Navbar() {
 
               {openMenu && (
                 <div className="absolute right-0 mt-3 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg overflow-hidden">
+                  {/* Role Badge */}
+                  <div className="px-4 py-2 bg-white/5 text-xs text-white/60 border-b border-white/10">
+                    Role:{" "}
+                    <span className="text-white font-medium capitalize">
+                      {userRole || "user"}
+                    </span>
+                  </div>
+
                   {/* Dashboard for Admin/Post Holder */}
                   {userRole === "admin" || userRole === "post_holder" ? (
                     <>
@@ -136,9 +144,37 @@ export default function Navbar() {
                       </button>
                       <div className="border-t border-white/10"></div>
                     </>
+                  ) : userRole === "member" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          navigate("/member-profile");
+                          setOpenMenu(false);
+                        }}
+                        className="w-full cursor-pointer text-left px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition flex items-center gap-2"
+                      >
+                        <User size={16} />
+                        Member Profile
+                      </button>
+                      <div className="border-t border-white/10"></div>
+                    </>
+                  ) : userRole === "student" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          navigate("/student-profile");
+                          setOpenMenu(false);
+                        }}
+                        className="w-full cursor-pointer text-left px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition flex items-center gap-2"
+                      >
+                        <User size={16} />
+                        Student Profile
+                      </button>
+                      <div className="border-t border-white/10"></div>
+                    </>
                   ) : (
                     <>
-                      {/* Profile for Members */}
+                      {/* Profile fallback */}
                       <button
                         onClick={() => {
                           navigate("/profile");

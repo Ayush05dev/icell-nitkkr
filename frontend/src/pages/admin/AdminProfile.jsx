@@ -17,15 +17,24 @@ import {
 
 export default function AdminProfile() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState(null);
   const [adminStats, setAdminStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user || (user.role !== "admin" && user.role !== "post_holder")) {
+    // Wait for auth to finish loading before checking user
+    if (
+      !authLoading &&
+      (!user || (user.role !== "admin" && user.role !== "post_holder"))
+    ) {
       navigate("/");
+      return;
+    }
+
+    // Don't fetch if still waiting for auth
+    if (authLoading) {
       return;
     }
 
@@ -67,7 +76,7 @@ export default function AdminProfile() {
     };
 
     fetchAdminData();
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   const handleLogout = () => {
     logout();

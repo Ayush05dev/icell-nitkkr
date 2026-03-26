@@ -55,6 +55,7 @@ export async function createEvent(req, res) {
       category,
       capacity,
       status,
+      years, // Array of academic years selected by admin
     } = req.body;
 
     if (!name || !date) {
@@ -72,7 +73,8 @@ export async function createEvent(req, res) {
       image || "",
       category || "",
       capacity ? parseInt(capacity) : 0,
-      req.user?.userId || req.user?.id // Safely grabs the admin ID
+      req.user?.userId, // Safely grabs the admin ID
+      Array.isArray(years) ? years : [] // Pass years array
     );
 
     res.status(201).json(event);

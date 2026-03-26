@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
 import {
   User,
   Mail,
@@ -9,15 +9,13 @@ import {
   BookOpen,
   LogOut,
   Award,
-  CheckCircle,
   Calendar,
+  CheckCircle,
   BarChart3,
-  Phone,
-  MapPin,
   Download,
 } from "lucide-react";
 
-export default function ProfilePage() {
+export default function StudentProfile() {
   const navigate = useNavigate();
   const { user, logout, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState(null);
@@ -34,8 +32,18 @@ export default function ProfilePage() {
       return;
     }
 
-    // Don't fetch if still waiting for auth
+    // Don't proceed if still waiting for auth
     if (authLoading) {
+      return;
+    }
+
+    // Redirect if not a student
+    if (user.role !== "student") {
+      if (user.role === "member") {
+        navigate("/member-profile");
+      } else if (user.role === "admin" || user.role === "post_holder") {
+        navigate("/admin");
+      }
       return;
     }
 
@@ -49,8 +57,18 @@ export default function ProfilePage() {
         try {
           const attendanceResponse = await api.get("/auth/attendance");
           const attendanceData = attendanceResponse.data || [];
-          const total = attendanceData.length;
-          const present = attendanceData.filter(
+
+          // Only count events where attendance was actually marked
+          // Filter to include only present, absent, or leave status
+          const markedEvents = attendanceData.filter(
+            (d) =>
+              d.status === "present" ||
+              d.status === "absent" ||
+              d.status === "leave"
+          );
+
+          const total = markedEvents.length;
+          const present = markedEvents.filter(
             (d) => d.status === "present"
           ).length;
           const percentage =
@@ -62,7 +80,6 @@ export default function ProfilePage() {
           });
         } catch (err) {
           console.warn("Could not fetch attendance:", err);
-          // Don't set dummy data - leave it null
           setAttendance(null);
         }
 
@@ -109,7 +126,6 @@ export default function ProfilePage() {
       let endpoint = "";
       let filename = "";
 
-      // Determine endpoint based on certificate type
       if (cert.certificate_type === "member") {
         endpoint = "/certificate/member/download";
         filename = `icell-member-certificate-${profile?.name?.replace(
@@ -124,25 +140,30 @@ export default function ProfilePage() {
         )}.svg`;
       } else if (cert.certificate_type === "event") {
         endpoint = `/certificate/event/download/${cert._id}`;
-        filename = `icell-achievement-certificate-${cert.metadata?.achievement
-          ?.replace(/\s+/g, "-")
-          .toLowerCase()}.svg`;
+        filename = `icell-achievement-certificate-${profile?.name?.replace(
+          /\s+/g,
+          "-"
+        )}.svg`;
       }
 
+      if (!endpoint) return;
+
       const response = await api.get(endpoint, {
-        responseType: "blob",
+        responseType: "arraybuffer",
       });
-      const url = window.URL.createObjectURL(response.data);
+
+      const blob = new Blob([response.data], { type: "image/svg+xml" });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", filename);
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
-      link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
     } catch (err) {
-      console.error("Failed to download certificate:", err);
-      alert("Failed to download certificate. Please try again.");
+      console.error("Download error:", err);
+      alert("Failed to download certificate: " + err.message);
     } finally {
       setMemberCertLoading(false);
     }
@@ -150,14 +171,25 @@ export default function ProfilePage() {
 
   const previewCertificate = async (cert) => {
     try {
-      const response = await api.get(`/certificate/preview/${cert._id}`);
-      // Open preview in new tab
-      const newWindow = window.open();
-      newWindow.document.write(response.data);
-      newWindow.document.close();
+      let endpoint = "";
+
+      if (cert.certificate_type === "member") {
+        endpoint = "/certificate/member/download";
+      } else if (cert.certificate_type === "post_holder") {
+        endpoint = "/certificate/postholder/download";
+      } else if (cert.certificate_type === "event") {
+        endpoint = `/certificate/preview/${cert._id}`;
+      }
+
+      if (!endpoint) return;
+
+      const response = await api.get(endpoint);
+      const htmlWindow = window.open();
+      htmlWindow.document.write(response.data);
+      htmlWindow.document.close();
     } catch (err) {
-      console.error("Failed to preview certificate:", err);
-      alert("Failed to load certificate preview.");
+      console.error("Preview error:", err);
+      alert("Failed to preview certificate: " + err.message);
     }
   };
 
@@ -251,7 +283,8 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                   <span className="text-xs text-[#999]">
-                    {profile?.is_member ? "Active Member" : "Inactive"}
+                    Student •{" "}
+                    {profile?.email_verified ? "Verified" : "Unverified"}
                   </span>
                 </div>
                 <p className="text-xs text-[#555] mt-2">
@@ -365,7 +398,6 @@ export default function ProfilePage() {
                 </h3>
               </div>
 
-              {/* Always show the section, even if empty */}
               {certificates && certificates.length > 0 ? (
                 <div>
                   {/* Certificate Statistics */}
@@ -504,7 +536,7 @@ export default function ProfilePage() {
                               </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-2">
                               <button
                                 onClick={() => previewCertificate(cert)}
                                 className="px-3 py-2 rounded-lg text-white text-sm font-medium transition-all whitespace-nowrap"
@@ -518,24 +550,17 @@ export default function ProfilePage() {
                               </button>
                               <button
                                 onClick={() => downloadCertificate(cert)}
-                                disabled={memberCertLoading}
                                 className="px-3 py-2 rounded-lg text-white text-sm font-medium transition-all whitespace-nowrap"
                                 style={{
-                                  background: memberCertLoading
-                                    ? "#6b7280"
-                                    : `linear-gradient(135deg, ${borderColor} 0%, ${borderColor}dd 100%)`,
-                                  color: memberCertLoading
-                                    ? "#ffffff"
-                                    : cert.certificate_type === "member"
-                                    ? "#000000"
-                                    : "#ffffff",
+                                  background: `linear-gradient(135deg, ${borderColor} 0%, ${borderColor}dd 100%)`,
+                                  color:
+                                    borderColor === "#fbbf24"
+                                      ? "#000000"
+                                      : "#ffffff",
                                 }}
                                 title={`Download ${cert.certificate_type} certificate`}
                               >
-                                ⬇️{" "}
-                                {memberCertLoading
-                                  ? "Downloading..."
-                                  : "Download"}
+                                ⬇️ Download
                               </button>
                             </div>
                           </div>
@@ -558,7 +583,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Right Column - Detailed Info */}
+          {/* Right Column - Account Info & Certificates */}
           <div className="lg:col-span-2 space-y-6">
             {/* Account Information Section */}
             <div
@@ -597,16 +622,25 @@ export default function ProfilePage() {
 
                 <div className="border-t" style={{ borderColor: "#1f1f1f" }}>
                   <p className="text-[#555] text-sm mb-1 mt-3">Role</p>
-                  <p className="text-white capitalize">
-                    {profile?.role === "post_holder"
-                      ? "Post Holder"
-                      : profile?.role || "Member"}
+                  <p className="text-white capitalize">Student</p>
+                </div>
+
+                <div className="border-t" style={{ borderColor: "#1f1f1f" }}>
+                  <p className="text-[#555] text-sm mb-1 mt-3">
+                    Email Verification
                   </p>
-                  {profile?.post_position && (
-                    <p className="text-[#999] text-xs mt-1">
-                      ({profile.post_position})
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        profile?.email_verified
+                          ? "bg-green-500"
+                          : "bg-yellow-500"
+                      }`}
+                    />
+                    <p className="text-white capitalize">
+                      {profile?.email_verified ? "Verified" : "Pending"}
                     </p>
-                  )}
+                  </div>
                 </div>
 
                 <div className="border-t" style={{ borderColor: "#1f1f1f" }}>
@@ -640,14 +674,88 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+
+            {/* Promotion Info Section */}
+            <div
+              className="rounded-xl border p-6"
+              style={{ background: "#111111", borderColor: "#1f1f1f" }}
+            >
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ background: "#3b82f620" }}
+                >
+                  <Award size={18} style={{ color: "#3b82f6" }} />
+                </div>
+                Promotion Status
+              </h3>
+
+              <div className="space-y-3">
+                {!profile?.email_verified && (
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      background: "#fbbf2415",
+                      borderColor: "#fbbf2430",
+                    }}
+                  >
+                    <p className="text-amber-300 text-sm font-medium mb-1">
+                      ⚠️ Email Verification Required
+                    </p>
+                    <p className="text-[#555] text-sm">
+                      Verify your email address to be eligible for member
+                      promotion
+                    </p>
+                  </div>
+                )}
+
+                {profile?.email_verified && (
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      background: "#10b98115",
+                      borderColor: "#10b98130",
+                    }}
+                  >
+                    <p className="text-green-400 text-sm font-medium mb-1">
+                      ✓ Email Verified
+                    </p>
+                    <p className="text-[#555] text-sm">
+                      If you are an official member of iCELL, contact the
+                      administrators to upgrade your role to Member or Post
+                      Holder
+                    </p>
+                  </div>
+                )}
+
+                <div className="border-t" style={{ borderColor: "#1f1f1f" }} />
+
+                <div>
+                  <p className="text-[#555] text-sm mb-2">Current Status</p>
+                  <span
+                    className="px-3 py-1 rounded-full text-sm font-medium"
+                    style={{ background: "#3b82f620", color: "#3b82f6" }}
+                  >
+                    Student
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-[#555] text-sm mb-2">Promotion Path</p>
+                  <p className="text-[#999] text-sm">
+                    Student → Member → (Optional: Post Holder)
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Logout Button */}
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8">
           <button
             onClick={handleLogout}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-all duration-300 font-medium border"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg transition-all duration-300 font-medium border text-sm"
             style={{
               background: "#ef444415",
               borderColor: "#ef444430",
@@ -660,7 +768,7 @@ export default function ProfilePage() {
               e.target.style.background = "#ef444415";
             }}
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
             Logout
           </button>
         </div>

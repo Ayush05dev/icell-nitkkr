@@ -12,7 +12,9 @@ export default function ProfileCard({ profile, user }) {
           <User size={32} className="text-white" />
         </div>
         <h2 className="text-base font-bold">{profile?.name || "User"}</h2>
-        <p className="text-[#555] text-xs">ID: {user?.id.substring(0, 8)}...</p>
+        <p className="text-[#555] text-xs">
+          ID: {user?._id?.substring(0, 8) ?? "..."}
+        </p>
       </div>
 
       {/* Quick Info */}

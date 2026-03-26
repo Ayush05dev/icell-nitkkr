@@ -17,12 +17,14 @@ import {
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function AdminAttendance() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // App State
   const [students, setStudents] = useState([]);
+  const [mainEvents, setMainEvents] = useState([]);
+  const [attendanceOnlyEvents, setAttendanceOnlyEvents] = useState([]);
   const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -30,24 +32,32 @@ export default function AdminAttendance() {
   const [error, setError] = useState(null);
 
   // Active View State
-  const [viewState, setViewState] = useState("list"); // 'list', 'create', 'edit'
+  // 'list' = show all past events, 'select' = choose between main/attendance-only, 'create' = new attendance-only, 'edit' = mark attendance
+  const [viewState, setViewState] = useState("list");
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState("meet");
   const [eventDate, setEventDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [eventSource, setEventSource] = useState("attendance_only"); // Track where event came from
+  const [eventYears, setEventYears] = useState([]); // Years selected for the event ["1st", "2nd", etc.]
   const [attendance, setAttendance] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all"); // Filter by role: "all", "student", "member"
+
+  // Academic years available (stored as strings in database: "1st", "2nd", "3rd", "4th")
+  const AVAILABLE_YEARS = ["1", "2", "3", "4"];
 
   const getToken = () =>
     localStorage.getItem("accessToken") || localStorage.getItem("access_token");
 
   // Check authorization
   useEffect(() => {
-    if (!user) {
+    // Wait for auth to finish loading before checking user
+    if (!authLoading && !user) {
       navigate("/login");
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   // Initial Data Load (Students & Past Events)
   const fetchInitialData = async () => {
@@ -63,13 +73,50 @@ export default function AdminAttendance() {
       const studentData = await studentRes.json();
       setStudents(Array.isArray(studentData) ? studentData : []);
 
-      // Fetch unique past events
-      const eventsRes = await fetch(`${API}/api/event-attendance/events/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setPastEvents(Array.isArray(eventsData) ? eventsData : []);
+      // Fetch main events from events collection
+      const mainEventsRes = await fetch(
+        `${API}/api/event-attendance/main-events`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (mainEventsRes.ok) {
+        const mainEventsData = await mainEventsRes.json();
+        setMainEvents(Array.isArray(mainEventsData) ? mainEventsData : []);
+      }
+
+      // Fetch attendance-only events
+      const attendanceOnlyRes = await fetch(
+        `${API}/api/event-attendance/attendance-only-events`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (attendanceOnlyRes.ok) {
+        const attendanceOnlyData = await attendanceOnlyRes.json();
+        setAttendanceOnlyEvents(
+          Array.isArray(attendanceOnlyData) ? attendanceOnlyData : []
+        );
+      }
+
+      // Fetch all unique events for the list view
+      const allEventsRes = await fetch(
+        `${API}/api/event-attendance/events/list`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (allEventsRes.ok) {
+        const allEventsData = await allEventsRes.json();
+        // Sort by createdAt/created_at DESC (newest first)
+        const sortedEvents = (
+          Array.isArray(allEventsData) ? allEventsData : []
+        ).sort(
+          (a, b) =>
+            new Date(b.createdAt || b.created_at) -
+            new Date(a.createdAt || a.created_at)
+        );
+        setPastEvents(sortedEvents);
       }
     } catch (err) {
       setError(err.message);
@@ -83,12 +130,19 @@ export default function AdminAttendance() {
   }, []);
 
   // Fetch specific event attendance when editing
-  const loadEventAttendance = async (name, date, type) => {
+  const loadEventAttendance = async (
+    name,
+    date,
+    type,
+    source = "attendance_only"
+  ) => {
     try {
       setLoading(true);
       setEventName(name);
       setEventDate(date);
       setEventType(type);
+      setEventSource(source);
+      setEventYears([]);
       setViewState("edit");
       setSearchTerm("");
 
@@ -156,9 +210,34 @@ export default function AdminAttendance() {
   };
 
   const handleCreateNew = () => {
+    // Go to selection view where user can choose between main or attendance-only
+    setEventYears([]);
+    setViewState("select");
+  };
+
+  const handleSelectMainEvent = (event) => {
+    // User selected a main event from the events collection
+    setEventName(event.name);
+    setEventType(event.category || "meet");
+    setEventDate(
+      event.date
+        ? new Date(event.date).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0]
+    );
+    setEventSource("main");
+    setEventYears([]);
+    setAttendance({});
+    setSearchTerm("");
+    setViewState("edit");
+  };
+
+  const handleCreateAttendanceOnly = () => {
+    // User chose to create a new attendance-only event
     setEventName("");
     setEventType("meet");
     setEventDate(new Date().toISOString().split("T")[0]);
+    setEventSource("attendance_only");
+    setEventYears([]);
     setAttendance({});
     setSearchTerm("");
     setViewState("create");
@@ -208,6 +287,7 @@ export default function AdminAttendance() {
               event_date: eventDate,
               student_id: studentId,
               status,
+              event_source: eventSource, // Pass the event source
             }),
           }).then((res) => {
             if (!res.ok)
@@ -230,11 +310,29 @@ export default function AdminAttendance() {
     }
   };
 
-  const filteredStudents = students.filter((student) =>
-    `${student.name} ${student.email}`
+  const filteredStudents = students.filter((student) => {
+    // Filter by search term
+    const matchesSearch = `${student.name} ${student.email}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+      .includes(searchTerm.toLowerCase());
+
+    // Filter by role
+    let matchesRole = true;
+    if (roleFilter === "student") {
+      matchesRole = student.role === "student";
+    } else if (roleFilter === "member") {
+      matchesRole = student.role === "member";
+    }
+    // else roleFilter === "all" means both are included
+
+    // Filter by event years - only show if years are selected AND student's year matches
+    let matchesYear = true;
+    if (eventYears.length > 0) {
+      matchesYear = eventYears.includes(student.year);
+    }
+
+    return matchesSearch && matchesRole && matchesYear;
+  });
 
   const stats = {
     total: filteredStudents.length,
@@ -301,7 +399,7 @@ export default function AdminAttendance() {
         {viewState === "list" && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold mb-4 text-[#ddd]">
-              Past Events
+              All Events (by Recent First)
             </h2>
             {pastEvents.length === 0 ? (
               <div className="p-6 rounded-lg border border-[#1f1f1f] bg-[#111111] text-center text-[#666]">
@@ -313,14 +411,21 @@ export default function AdminAttendance() {
                   <div
                     key={index}
                     onClick={() =>
-                      loadEventAttendance(ev.name, ev.date, ev.type)
+                      loadEventAttendance(ev.name, ev.date, ev.type, ev.source)
                     }
                     className="p-5 rounded-xl border border-[#1f1f1f] bg-[#111111] hover:border-purple-500/50 cursor-pointer transition group relative"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-white truncate pr-6">
-                        {ev.name}
-                      </h3>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white truncate pr-6">
+                          {ev.name}
+                        </h3>
+                        <p className="text-xs text-[#666] mt-1">
+                          {ev.source === "main"
+                            ? "📌 Main Event"
+                            : "📝 Attendance-Only"}
+                        </p>
+                      </div>
                       <button
                         onClick={(e) => handleDeleteEvent(ev.name, ev.date, e)}
                         disabled={deleting}
@@ -346,13 +451,161 @@ export default function AdminAttendance() {
           </div>
         )}
 
-        {/* VIEW 2: CREATE OR EDIT ATTENDANCE */}
+        {/* VIEW 2: SELECT EVENT TYPE */}
+        {viewState === "select" && (
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-semibold mb-6 text-white">
+              How would you like to mark attendance?
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Option 1: Select from Main Events */}
+              <div className="rounded-2xl border-2 border-[#1f1f1f] bg-[#111111] p-8 hover:border-purple-500 transition">
+                <h3 className="text-xl font-bold text-white mb-4">
+                  📌 From Main Events
+                </h3>
+                <p className="text-[#888] text-sm mb-6">
+                  Select from events created in the Events section. Recently
+                  created first.
+                </p>
+
+                {mainEvents.length === 0 ? (
+                  <div className="p-4 rounded-lg bg-[#0d0d0d] border border-[#2f2f2f] text-[#666] text-sm text-center mb-4">
+                    No main events created yet. Create events in the Events
+                    section first.
+                  </div>
+                ) : (
+                  <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                    {mainEvents.map((event) => (
+                      <button
+                        key={event._id}
+                        onClick={() => handleSelectMainEvent(event)}
+                        className="w-full p-4 rounded-lg bg-[#0d0d0d] border border-[#2f2f2f] hover:border-purple-500 hover:bg-[#1a1a1a] transition text-left"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {event.name}
+                            </p>
+                            <p className="text-xs text-[#666] mt-1">
+                              {event.date
+                                ? new Date(event.date).toLocaleDateString()
+                                : "No date"}
+                            </p>
+                          </div>
+                          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded capitalize">
+                            {event.category || "event"}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {mainEvents.length > 0 && (
+                  <button
+                    onClick={() => setViewState("list")}
+                    className="w-full px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition"
+                  >
+                    Select from Events
+                  </button>
+                )}
+              </div>
+
+              {/* Option 2: Create Attendance-Only Event */}
+              <div className="rounded-2xl border-2 border-[#1f1f1f] bg-[#111111] p-8 hover:border-blue-500 transition">
+                <h3 className="text-xl font-bold text-white mb-4">
+                  📝 Attendance-Only Event
+                </h3>
+                <p className="text-[#888] text-sm mb-6">
+                  Create a new event just for attendance tracking. This won't
+                  appear in the Events section.
+                </p>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm text-[#888] mb-2">
+                      Event Name *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Spring Fest Prep"
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#2f2f2f] text-white focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-[#888] mb-2">
+                      Event Type
+                    </label>
+                    <select
+                      value={eventType}
+                      onChange={(e) => setEventType(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#2f2f2f] text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="meet">Regular Meet</option>
+                      <option value="internal">Internal Event</option>
+                      <option value="external">External Event</option>
+                      <option value="workshop">Workshop</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-[#888] mb-2">
+                      Event Date
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        size={18}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#555]"
+                      />
+                      <input
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#2f2f2f] text-white focus:border-blue-500 focus:outline-none"
+                        style={{ colorScheme: "dark" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCreateAttendanceOnly}
+                  disabled={!eventName.trim()}
+                  className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition"
+                >
+                  Create & Mark Attendance
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setViewState("list")}
+              className="mt-6 px-4 py-2 text-[#888] hover:text-white transition"
+            >
+              ← Back to Events List
+            </button>
+          </div>
+        )}
+
+        {/* VIEW 3: CREATE OR EDIT ATTENDANCE */}
         {(viewState === "create" || viewState === "edit") && (
           <>
             {/* Event Details Form */}
             <div className="bg-[#111111] border border-[#1f1f1f] rounded-xl p-6 mb-8">
               <h2 className="text-lg font-semibold mb-4 text-purple-400">
-                {viewState === "create" ? "Event Details" : "Editing Event"}
+                {viewState === "create"
+                  ? "New Attendance-Only Event"
+                  : `Editing Event${
+                      eventSource === "main"
+                        ? " (Main Event)"
+                        : eventSource === "attendance_only"
+                        ? " (Attendance-Only)"
+                        : ""
+                    }`}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -404,21 +657,80 @@ export default function AdminAttendance() {
             </div>
 
             {/* Attendance Tools */}
-            <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="relative w-full md:w-96">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#555]"
-                />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500"
-                />
+            <div className="mb-6 flex flex-col gap-4">
+              {/* Row 1: Search and Role Filter */}
+              <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="relative w-full md:w-96">
+                  <Search
+                    size={18}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#555]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search students..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                {/* Role Filter Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setRoleFilter("all")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      roleFilter === "all"
+                        ? "bg-purple-600 text-white border border-purple-500"
+                        : "bg-[#1f1f1f] text-[#aaa] border border-[#2f2f2f] hover:bg-[#2f2f2f]"
+                    }`}
+                  >
+                    All Users
+                  </button>
+                  <button
+                    onClick={() => setRoleFilter("student")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      roleFilter === "student"
+                        ? "bg-blue-600 text-white border border-blue-500"
+                        : "bg-[#1f1f1f] text-[#aaa] border border-[#2f2f2f] hover:bg-[#2f2f2f]"
+                    }`}
+                  >
+                    Students Only
+                  </button>
+                  <button
+                    onClick={() => setRoleFilter("member")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      roleFilter === "member"
+                        ? "bg-cyan-600 text-white border border-cyan-500"
+                        : "bg-[#1f1f1f] text-[#aaa] border border-[#2f2f2f] hover:bg-[#2f2f2f]"
+                    }`}
+                  >
+                    Members Only
+                  </button>
+                </div>
+
+                {/* Year Filter Checkboxes */}
+                <div className="flex gap-2 flex-wrap">
+                  {AVAILABLE_YEARS.map((year) => (
+                    <label key={year} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={eventYears.includes(year)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEventYears([...eventYears, year]);
+                          } else {
+                            setEventYears(eventYears.filter((y) => y !== year));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-[#2f2f2f] cursor-pointer"
+                      />
+                      <span className="text-sm text-[#aaa] hover:text-white transition">{year} Year</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
+              {/* Row 2: Mark All and Clear Buttons */}
               <div className="flex gap-2">
                 <button
                   onClick={() => handleMarkAll("present")}

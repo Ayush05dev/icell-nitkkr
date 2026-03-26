@@ -47,7 +47,9 @@ export async function promoteToPostHolder(req, res) {
     const { studentId, newRole } = req.body;
 
     if (!studentId || !newRole) {
-      return res.status(400).json({ error: "Student ID and role are required" });
+      return res
+        .status(400)
+        .json({ error: "Student ID and role are required" });
     }
 
     await authModel.promoteStudent(studentId, newRole);
@@ -62,8 +64,8 @@ export async function promoteToPostHolder(req, res) {
 // Get all post holders
 export async function getAllPostHolders(req, res) {
   try {
-    const postHolders = await authModel.getAllStudents();
-    const filtered = postHolders.filter((s) => s.role !== "member");
+    const allUsers = await authModel.getAllStudentsAdmin();
+    const filtered = allUsers.filter((s) => s.role === "post_holder");
     res.json(filtered);
   } catch (error) {
     console.error("Get post holders error:", error);

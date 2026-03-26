@@ -1,4 +1,6 @@
 import * as authModel from "../models/authModel.js";
+import * as certificateModel from "../models/certificateModel.js";
+import { fetchStudentEventAttendance } from "../models/eventAttendanceModel.js";
 import crypto from "crypto";
 import {
   generateToken,
@@ -9,7 +11,9 @@ import { sendVerificationEmail } from "../utils/emailService.js";
 
 const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
 const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
-const EMAIL_SEND_TIMEOUT_MS = Number(process.env.EMAIL_SEND_TIMEOUT_MS || 15000);
+const EMAIL_SEND_TIMEOUT_MS = Number(
+  process.env.EMAIL_SEND_TIMEOUT_MS || 15000
+);
 
 function withTimeout(promise, timeoutMs) {
   return Promise.race([
@@ -275,7 +279,7 @@ export async function getStudentsByFilter(req, res) {
 // Promote student
 export async function promoteStudent(req, res) {
   try {
-    const { studentId, newRole } = req.body;
+    const { studentId, newRole, postPosition } = req.body;
 
     if (!studentId || !newRole) {
       return res
@@ -283,9 +287,64 @@ export async function promoteStudent(req, res) {
         .json({ error: "Student ID and role are required" });
     }
 
-    await authModel.promoteStudent(studentId, newRole);
+    // If promoting to member role, require post position
+    if (newRole === "member" && postPosition) {
+      // Verify post position is not empty
+      if (!postPosition.trim()) {
+        return res.status(400).json({ error: "Post position cannot be empty" });
+      }
+    }
 
-    res.json({ message: "Student promoted successfully" });
+    // Promote the student
+    await authModel.promoteStudent(studentId, newRole, postPosition);
+
+    // Get the student after promotion
+    const student = await authModel.getUserById(studentId);
+
+    // Auto-generate corresponding certificate
+    try {
+      if (newRole === "member") {
+        // Check if member certificate already exists
+        const existingCert = await certificateModel.hasCertificateType(
+          studentId,
+          "member"
+        );
+
+        if (!existingCert) {
+          await certificateModel.createCertificate(studentId, "member", {
+            title: "iCell Member Certificate",
+            description: "Official membership certificate",
+          });
+        }
+
+        // If post position provided, also create post holder certificate
+        if (postPosition) {
+          const existingPostCert = await certificateModel.hasCertificateType(
+            studentId,
+            "post_holder"
+          );
+
+          if (!existingPostCert) {
+            await certificateModel.createCertificate(studentId, "post_holder", {
+              title: `${postPosition} - Post Holder Certificate`,
+              description: `Appointed as ${postPosition}`,
+              post_position: postPosition,
+            });
+          }
+        }
+      }
+    } catch (certError) {
+      console.warn(
+        "Warning: Could not create certificate for promoted user:",
+        certError
+      );
+      // Don't fail the promotion if certificate creation fails
+    }
+
+    res.json({
+      message: "Student promoted successfully",
+      certificateGenerated: newRole === "member",
+    });
   } catch (error) {
     console.error("Promote student error:", error);
     res.status(500).json({ error: "Failed to promote student" });
@@ -297,12 +356,25 @@ export async function getAttendance(req, res) {
   try {
     const userId = req.user.userId;
 
-    // Return real attendance data from database
-    // For now, return empty array as no attendance records exist yet
-    // In production, this would query the attendance collection
-    const attendanceRecords = [];
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: User ID not found in token" });
+    }
 
-    res.json(attendanceRecords);
+    // Fetch attendance records from event_attendance collection
+    const { data, error } = await fetchStudentEventAttendance(userId);
+
+    if (error) {
+      console.error("Error fetching attendance:", error);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch attendance records" });
+    }
+
+    // Return array of attendance records
+    // Frontend expects: [{ status: "present", event_name: "...", event_date: "..." }, ...]
+    res.json(data || []);
   } catch (error) {
     console.error("Get attendance error:", error);
     res.status(500).json({ error: "Failed to get attendance" });
@@ -394,7 +466,7 @@ export async function deleteStudent(req, res) {
     const { id } = req.params;
 
     // Prevent deleting yourself
-    if (id === req.user?.id) {
+    if (id === req.user?.userId) {
       return res
         .status(400)
         .json({ error: "You cannot delete your own account." });
