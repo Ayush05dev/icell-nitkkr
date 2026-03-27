@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Loader } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 export default function NewsletterSection() {
   const [newsletters, setNewsletters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ export default function NewsletterSection() {
   useEffect(() => {
     const fetchNewsletters = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/newsletters");
+        const res = await fetch(`${API_BASE}/api/newsletters`);
         const data = await res.json();
         setNewsletters(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -24,7 +26,7 @@ export default function NewsletterSection() {
   const handleOpenNewsletter = async (id, url) => {
     // Track the opening
     try {
-      await fetch(`http://localhost:5000/api/newsletters/${id}/download`, {
+      await fetch(`${API_BASE}/api/newsletters/${id}/download`, {
         method: "POST",
       });
     } catch (err) {
