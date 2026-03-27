@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Loader } from "lucide-react";
 
-const API = "http://localhost:5000/api/gallery";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API = `${API_BASE}/api/gallery`;
 const PHOTOS_PER_VIEW = 3;
 
 export default function GallerySection() {
