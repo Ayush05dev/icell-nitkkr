@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Trash2, Plus, AlertCircle } from "lucide-react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 
-const API = "http://localhost:5000/api/gallery";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const API = `${BASE_URL}/api/gallery`;
 const CLOUDINARY_CLOUD_NAME = "dpgkl1wq4";
 const CLOUDINARY_UPLOAD_PRESET = "icell-webite-gallery-upload";
 
