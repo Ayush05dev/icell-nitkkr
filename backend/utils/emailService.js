@@ -97,12 +97,12 @@ export async function sendVerificationEmail(
       <body>
         <div class="container">
           <div class="header">
-            <h1>Welcome to NITKKR!</h1>
+            <h1>Welcome to ICell NIT Kurukshetra!</h1>
           </div>
           <div class="content">
             <p>Hi <strong>${recipientName}</strong>,</p>
             
-            <p>Thank you for registering with NITKKR. To complete your registration, please verify your email address by clicking the button below:</p>
+            <p>Thank you for registering with ICell NIT Kurukshetra. To complete your registration, please verify your email address by clicking the button below:</p>
             
             <center>
               <a href="${verificationLink}" class="button">Verify Email Address</a>
@@ -117,9 +117,9 @@ export async function sendVerificationEmail(
               <strong>Note:</strong> This link will expire in 24 hours. If you did not create this account, please ignore this email.
             </div>
             
-            <p>Once you verify your email, you'll be able to log in and access all features of the NITKKR platform.</p>
+            <p>Once you verify your email, you'll be able to log in and access all features of the ICell NIT Kurukshetra platform.</p>
             
-            <p>Best regards,<br>NITKKR Team</p>
+            <p>Best regards,<br>ICell Team</p>
           </div>
           <div class="footer">
             <p>&copy; 2024 NIT Kurukshetra. All rights reserved.</p>
@@ -131,20 +131,20 @@ export async function sendVerificationEmail(
     `;
 
     const textContent = `
-      Welcome to NITKKR!
+      Welcome to ICell NIT Kurukshetra!
       
       Hi ${recipientName},
       
-      Thank you for registering with NITKKR. To complete your registration, please verify your email address by visiting the following link:
+      Thank you for registering with ICell NIT Kurukshetra. To complete your registration, please verify your email address by visiting the following link:
       
       ${verificationLink}
       
       This link will expire in 24 hours. If you did not create this account, please ignore this email.
       
-      Once you verify your email, you'll be able to log in and access all features of the NITKKR platform.
+      Once you verify your email, you'll be able to log in and access all features of the ICell NIT Kurukshetra platform.
       
       Best regards,
-      NITKKR Team
+      ICell Team
     `;
 
     const response = await mailjet.post("send", { version: "v3.1" }).request({
@@ -160,7 +160,7 @@ export async function sendVerificationEmail(
               Name: recipientName,
             },
           ],
-          Subject: "Verify Your NITKKR Email Address",
+          Subject: "Verify Your ICell NIT Kurukshetra Email Address",
           HTMLPart: htmlContent,
           TextPart: textContent,
         },

@@ -5,6 +5,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import { connectDB, closeDB } from "./config/mongodb.js";
+import { startCleanupJob, stopCleanupJob } from "./utils/cleanupService.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
@@ -26,6 +27,9 @@ async function startServer() {
   try {
     await connectDB();
     console.log("✅ Connected to MongoDB");
+
+    // Start background cleanup job for expired unverified student accounts
+    startCleanupJob();
   } catch (error) {
     console.error("❌ Failed to connect to MongoDB:", error);
     process.exit(1);
@@ -91,6 +95,7 @@ async function startServer() {
   // ── Graceful shutdown ─────────────────────────────────────────────────────────
   process.on("SIGTERM", async () => {
     console.log("SIGTERM received, closing server...");
+    stopCleanupJob();
     server.close(async () => {
       await closeDB();
       process.exit(0);
@@ -99,6 +104,7 @@ async function startServer() {
 
   process.on("SIGINT", async () => {
     console.log("SIGINT received, closing server...");
+    stopCleanupJob();
     server.close(async () => {
       await closeDB();
       process.exit(0);

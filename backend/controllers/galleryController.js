@@ -53,7 +53,7 @@ export const uploadPhoto = async (req, res) => {
       title,
       event: event || "Other",
       image_url,
-      uploaded_by: req.user.id,
+      uploaded_by: req.user.userId,
       created_at: new Date().toISOString(),
     };
 

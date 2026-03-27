@@ -27,8 +27,9 @@ export async function createUser(email, password, name, phone, branch, year) {
     branch: branch || "",
     year: year || "",
     roll_number: "",
-    role: "member",
-    is_member: true,
+    role: "student",
+    is_member: false,
+    post_position: null,
     email_verified: false,
     verification_token_hash: null,
     verification_token_expires_at: null,
@@ -95,42 +96,110 @@ export async function updateUserProfile(userId, updates) {
   return result.modifiedCount > 0;
 }
 
-// Get all students
+// Get all verified students (with email verification)
 export async function getAllStudents() {
   const db = getDB();
   const profiles = db.collection("profiles");
 
-  return await profiles.find({ is_member: true }).sort({ name: 1 }).toArray();
+  return await profiles
+    .find({ role: { $in: ["student", "member"] }, email_verified: true })
+    .sort({ created_at: -1 })
+    .toArray();
 }
 
-// Get students by filter
+// Get all students (verified or not) - for admin to see all students
+export async function getAllStudentsAdmin() {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  // Return all verified users from student cohort (student, member, post_holder roles)
+  return await profiles
+    .find({
+      role: { $in: ["student", "member", "post_holder"] },
+      email_verified: true,
+    })
+    .sort({ created_at: -1 })
+    .toArray();
+}
+
+// Get verified students by filter
 export async function getStudentsByFilter(branch, year) {
   const db = getDB();
   const profiles = db.collection("profiles");
 
-  const filter = { is_member: true };
+  const filter = { role: { $in: ["student", "member"] }, email_verified: true };
   if (branch) filter.branch = branch;
   if (year) filter.year = year;
 
-  return await profiles.find(filter).sort({ name: 1 }).toArray();
+  return await profiles.find(filter).sort({ created_at: -1 }).toArray();
 }
 
-// Promote student to admin/post_holder
-export async function promoteStudent(studentId, newRole) {
+// Get unverified students (for cleanup)
+export async function getUnverifiedStudents() {
   const db = getDB();
   const profiles = db.collection("profiles");
+
+  return await profiles
+    .find({ role: "student", email_verified: false })
+    .sort({ created_at: 1 })
+    .toArray();
+}
+
+// Promote student to member or post_holder
+export async function promoteStudent(studentId, newRole, postPosition = null) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const validRoles = ["student", "member", "post_holder", "admin"];
+  if (!validRoles.includes(newRole)) {
+    throw new Error(`Invalid role: ${newRole}`);
+  }
+
+  const updateData = {
+    role: newRole,
+    updated_at: new Date(),
+  };
+
+  // When promoting to member or post_holder, mark as member
+  if (newRole === "member" || newRole === "post_holder") {
+    updateData.is_member = true;
+  } else {
+    // When demoting to student or admin, clear position
+    updateData.is_member = false;
+    updateData.post_position = null;
+  }
+
+  // Store position if promoting to post_holder with a position
+  if (newRole === "post_holder" && postPosition) {
+    updateData.post_position = postPosition;
+  } else if (newRole === "member") {
+    updateData.post_position = null;
+  }
 
   const result = await profiles.updateOne(
     { _id: studentId },
     {
-      $set: {
-        role: newRole,
-        updated_at: new Date(),
-      },
+      $set: updateData,
     }
   );
 
   return result.modifiedCount > 0;
+}
+
+// Delete unverified accounts older than specified hours
+export async function deleteUnverifiedOlderThan(hoursAgo) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const cutoffTime = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
+
+  const result = await profiles.deleteMany({
+    role: "student",
+    email_verified: false,
+    created_at: { $lt: cutoffTime },
+  });
+
+  return result.deletedCount;
 }
 
 // Check if any admin exists

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const BRANCHES = ["CSE", "ECE", "ME", "CIVIL", "EEE", "BT"];
-const YEARS = ["1st", "2nd", "3rd", "4th"];
+const YEARS = ["1", "2", "3", "4"];
 const POSITIONS = [
   "President",
   "Vice President",
@@ -27,12 +27,14 @@ const POSITIONS = [
 ];
 
 export default function AdminStudents() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attendance, setAttendance] = useState({}); // {studentId: {total, present, absent, percentage}}
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
@@ -40,6 +42,7 @@ export default function AdminStudents() {
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [promotePosition, setPromotePosition] = useState("");
+  const [promoteToRole, setPromoteToRole] = useState(""); // New: track target role
 
   const [formData, setFormData] = useState({
     name: "",
@@ -52,17 +55,46 @@ export default function AdminStudents() {
 
   // Check admin access
   useEffect(() => {
-    if (!user || (user.role !== "admin" && user.role !== "post_holder")) {
+    // Wait for auth to finish loading before checking user
+    if (
+      !authLoading &&
+      (!user || (user.role !== "admin" && user.role !== "post_holder"))
+    ) {
       navigate("/");
       return;
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get("/auth/students");
-      setStudents(Array.isArray(response.data) ? response.data : []);
+      const response = await api.get("/admin/students/all");
+      // Handle both array response and object with students property
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data.students || [];
+      setStudents(data);
+
+      // Fetch attendance stats for all students
+      if (data.length > 0) {
+        try {
+          setAttendanceLoading(true);
+          const studentIds = data.map((s) => s._id);
+          console.log("Sending studentIds:", studentIds);
+          const attendanceResponse = await api.post(
+            "event-attendance/students/bulk-stats",
+            { studentIds }
+          );
+          console.log("Attendance API Response:", attendanceResponse.data);
+          setAttendance(attendanceResponse.data || {});
+        } catch (err) {
+          console.error("Error fetching attendance:", err);
+          console.error("Error response:", err.response?.data);
+          setAttendance({});
+        } finally {
+          setAttendanceLoading(false);
+        }
+      }
     } catch (err) {
       console.error("Error fetching students:", err);
     } finally {
@@ -138,37 +170,116 @@ export default function AdminStudents() {
   };
 
   const handlePromoteStudent = async () => {
-    if (!promotePosition) {
-      alert("Please select a position");
+    if (!selectedStudent) {
+      alert("Please select a student");
       return;
     }
 
     try {
-      await api.post("/admin/promote-member", {
-        memberId: selectedStudent._id,
-        newRole: "post_holder",
-      });
+      let endpoint = "";
+      let data = {};
+
+      // Student → Member or Post Holder
+      if (selectedStudent.role === "student") {
+        const targetRole = promoteToRole || "member";
+        endpoint = "/admin/students/promote";
+        data.studentId = selectedStudent._id;
+        data.newRole = targetRole;
+        if (targetRole === "post_holder" && promotePosition) {
+          data.postPosition = promotePosition;
+        }
+      }
+      // Member → Post Holder or Student
+      else if (selectedStudent.role === "member") {
+        endpoint = "/admin/students/change-role";
+        data.userId = selectedStudent._id;
+        data.newRole = promoteToRole || "post_holder";
+        if (
+          (promoteToRole || "post_holder") === "post_holder" &&
+          promotePosition
+        ) {
+          data.postPosition = promotePosition;
+        }
+      }
+      // Post Holder → Member or Student
+      else if (selectedStudent.role === "post_holder") {
+        endpoint = "/admin/students/change-role";
+        data.userId = selectedStudent._id;
+        data.newRole = promoteToRole || "member";
+      }
+
+      if (!endpoint) {
+        alert("This user cannot be promoted");
+        return;
+      }
+
+      await api.post(endpoint, data);
       setShowPromoteModal(false);
       setSelectedStudent(null);
       setPromotePosition("");
+      setPromoteToRole("");
       fetchStudents();
     } catch (err) {
       console.error("Error promoting student:", err);
-      alert("Failed to promote student");
+      alert(
+        "Failed to promote student: " +
+          (err.response?.data?.error || err.message)
+      );
     }
   };
 
   const handleDemoteStudent = async (studentId) => {
+    const student = students.find((s) => s._id === studentId);
+    if (!student) return;
+
     try {
-      await api.post("/admin/promote-member", {
-        memberId: studentId,
-        newRole: "member",
+      const endpoint = "/admin/students/demote";
+
+      await api.post(endpoint, {
+        userId: studentId,
       });
       fetchStudents();
     } catch (err) {
       console.error("Error demoting student:", err);
-      alert("Failed to demote student");
+      alert(
+        "Failed to demote student: " +
+          (err.response?.data?.error || err.message)
+      );
     }
+  };
+
+  // Get attendance color and badge style based on percentage
+  const getAttendanceColorAndStyle = (percentage) => {
+    if (percentage === 0) {
+      return {
+        bgColor: "#1f1f1f",
+        textColor: "#666",
+        badge: "#1f1f1f30",
+        badgeText: "#666",
+      };
+    }
+    if (percentage < 50) {
+      return {
+        bgColor: "#ef4444",
+        textColor: "#fca5a5",
+        badge: "#ef444415",
+        badgeText: "#ef4444",
+      };
+    }
+    if (percentage < 75) {
+      return {
+        bgColor: "#f97316",
+        textColor: "#fed7aa",
+        badge: "#f9731615",
+        badgeText: "#f97316",
+      };
+    }
+    return {
+      bgColor: "#22c55e",
+      textColor: "#dcfce7",
+      badge: "#22c55e15",
+      badgeText: "#22c55e",
+    };
   };
 
   if (loading) {
@@ -277,6 +388,9 @@ export default function AdminStudents() {
                       Roll Number
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                      Attendance
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
                       Role
                     </th>
                     <th className="px-6 py-4 text-right text-sm font-semibold text-white">
@@ -285,64 +399,98 @@ export default function AdminStudents() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.map((student) => (
-                    <tr
-                      key={student._id}
-                      style={{ borderBottom: "1px solid #1f1f1f" }}
-                      className="hover:bg-[#0d0d0d] transition"
-                    >
-                      <td className="px-6 py-4 text-sm text-white font-medium">
-                        {student.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#555]">
-                        {student.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#555]">
-                        {student.branch || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#555]">
-                        {student.year || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-[#555]">
-                        {student.roll_number || "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        {student.role === "post_holder" ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                            {student.post_position || "Post Holder"}
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
-                            Member
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {student.role === "post_holder" ? (
-                            <button
-                              onClick={() => handleDemoteStudent(student._id)}
-                              className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition text-xs"
-                              title="Demote"
-                            >
-                              Demote
-                            </button>
+                  {filteredStudents.map((student) => {
+                    const attendanceData = attendance[student._id];
+                    const percentage = attendanceData?.percentage || 0;
+                    const total = attendanceData?.total || 0;
+                    const colorStyle = getAttendanceColorAndStyle(percentage);
+
+                    return (
+                      <tr
+                        key={student._id}
+                        style={{ borderBottom: "1px solid #1f1f1f" }}
+                        className="hover:bg-[#0d0d0d] transition"
+                      >
+                        <td className="px-6 py-4 text-sm text-white font-medium">
+                          {student.name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#555]">
+                          {student.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#555]">
+                          {student.branch || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#555]">
+                          {student.year || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#555]">
+                          {student.roll_number || "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {attendanceLoading ? (
+                            <span className="text-[#555]">Loading...</span>
+                          ) : total === 0 ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#1f1f1f] text-[#666]">
+                              No data
+                            </span>
                           ) : (
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="px-3 py-1 rounded-full text-xs font-medium"
+                                style={{
+                                  background: colorStyle.badge,
+                                  color: colorStyle.badgeText,
+                                }}
+                              >
+                                {percentage}%
+                              </span>
+                              <span className="text-[#555] text-xs">
+                                {attendanceData.present}/{total}
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {student.role === "post_holder" ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                              {student.post_position || "Post Holder"}
+                            </span>
+                          ) : student.role === "member" ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-pink-500/20 text-pink-400">
+                              Member
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                              Student
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => {
                                 setSelectedStudent(student);
                                 setShowPromoteModal(true);
                               }}
-                              className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition"
-                              title="Promote to Post Holder"
+                              className="px-3 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition text-xs font-medium"
+                              title="Change Role"
                             >
-                              <Award size={16} />
+                              Change Role
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {student.role !== "student" && (
+                              <button
+                                onClick={() => handleDemoteStudent(student._id)}
+                                className="px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition text-xs font-medium"
+                                title="Demote"
+                              >
+                                Demote
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -471,10 +619,14 @@ export default function AdminStudents() {
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">
-                    Promote Student
+                    Change {selectedStudent.name}'s Role
                   </h2>
                   <button
-                    onClick={() => setShowPromoteModal(false)}
+                    onClick={() => {
+                      setShowPromoteModal(false);
+                      setPromoteToRole("");
+                      setPromotePosition("");
+                    }}
                     className="text-[#555] hover:text-white"
                   >
                     <X size={24} />
@@ -482,34 +634,280 @@ export default function AdminStudents() {
                 </div>
 
                 <p className="text-[#555] mb-4">
-                  Promote {selectedStudent.name} to Post Holder
+                  Current role:{" "}
+                  <span className="text-white font-medium capitalize">
+                    {selectedStudent.role}
+                  </span>
                 </p>
 
-                <select
-                  value={promotePosition}
-                  onChange={(e) => setPromotePosition(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500 mb-6"
-                >
-                  <option value="">Select Position</option>
-                  {POSITIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
+                {/* Role selection based on current role */}
+                <div className="space-y-3 mb-6">
+                  {selectedStudent.role === "student" && (
+                    <>
+                      <p className="text-[#555] text-sm mb-3">
+                        Select the role to promote to:
+                      </p>
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "member"
+                              ? "#3b82f620"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "member" ? "#3b82f6" : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="member"
+                          checked={promoteToRole === "member"}
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                            setPromotePosition("");
+                          }}
+                          className="mr-3 cursor-pointer"
+                        />
+                        <div>
+                          <div className="text-white font-medium">Member</div>
+                          <div className="text-[#555] text-sm">
+                            Regular member, no specific position
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "post_holder"
+                              ? "#10b98120"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "post_holder"
+                              ? "#10b981"
+                              : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="post_holder"
+                          checked={promoteToRole === "post_holder"}
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                          }}
+                          className="mr-3 cursor-pointer"
+                        />
+                        <div>
+                          <div className="text-white font-medium">
+                            Post Holder
+                          </div>
+                          <div className="text-[#555] text-sm">
+                            Leadership position with specific role
+                          </div>
+                        </div>
+                      </label>
+                    </>
+                  )}
+
+                  {selectedStudent.role === "member" && (
+                    <>
+                      <p className="text-[#555] text-sm mb-3">
+                        Select the role to change to:
+                      </p>
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "post_holder"
+                              ? "#10b98120"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "post_holder"
+                              ? "#10b981"
+                              : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="post_holder"
+                          checked={
+                            promoteToRole === "post_holder" ||
+                            promoteToRole === ""
+                          }
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                          }}
+                          className="mr-3 cursor-pointer"
+                          defaultChecked
+                        />
+                        <div>
+                          <div className="text-white font-medium">
+                            Post Holder
+                          </div>
+                          <div className="text-[#555] text-sm">
+                            Promote to leadership position with specific role
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "student"
+                              ? "#ef444420"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "student" ? "#ef4444" : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="student"
+                          checked={promoteToRole === "student"}
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                            setPromotePosition("");
+                          }}
+                          className="mr-3 cursor-pointer"
+                        />
+                        <div>
+                          <div className="text-white font-medium">Student</div>
+                          <div className="text-[#555] text-sm">
+                            Demote to regular student
+                          </div>
+                        </div>
+                      </label>
+                    </>
+                  )}
+
+                  {selectedStudent.role === "post_holder" && (
+                    <>
+                      <p className="text-[#555] text-sm mb-3">
+                        Select the role to demote to:
+                      </p>
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "member"
+                              ? "#3b82f620"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "member" ? "#3b82f6" : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="member"
+                          checked={
+                            promoteToRole === "member" || promoteToRole === ""
+                          }
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                            setPromotePosition("");
+                          }}
+                          className="mr-3 cursor-pointer"
+                          defaultChecked
+                        />
+                        <div>
+                          <div className="text-white font-medium">Member</div>
+                          <div className="text-[#555] text-sm">
+                            Demote to regular member
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className="flex items-center p-3 rounded-lg border cursor-pointer transition"
+                        style={{
+                          background:
+                            promoteToRole === "student"
+                              ? "#ef444420"
+                              : "transparent",
+                          borderColor:
+                            promoteToRole === "student" ? "#ef4444" : "#1f1f1f",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value="student"
+                          checked={promoteToRole === "student"}
+                          onChange={(e) => {
+                            setPromoteToRole(e.target.value);
+                            setPromotePosition("");
+                          }}
+                          className="mr-3 cursor-pointer"
+                        />
+                        <div>
+                          <div className="text-white font-medium">Student</div>
+                          <div className="text-[#555] text-sm">
+                            Demote to regular student
+                          </div>
+                        </div>
+                      </label>
+                    </>
+                  )}
+                </div>
+
+                {/* Show position dropdown when promoting to post_holder */}
+                {(promoteToRole === "post_holder" ||
+                  (selectedStudent.role === "member" &&
+                    (promoteToRole === "" ||
+                      promoteToRole === "post_holder"))) && (
+                  <>
+                    <label className="block text-[#555] text-sm mb-2">
+                      Select Position
+                    </label>
+                    <select
+                      value={promotePosition}
+                      onChange={(e) => setPromotePosition(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500 mb-6"
+                    >
+                      <option value="">-- Select a position --</option>
+                      {POSITIONS.filter((p) => p !== "Member").map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                )}
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setShowPromoteModal(false)}
+                    type="button"
+                    onClick={() => {
+                      setShowPromoteModal(false);
+                      setPromoteToRole("");
+                      setPromotePosition("");
+                    }}
                     className="flex-1 px-4 py-2 rounded-lg bg-[#0d0d0d] border border-[#1f1f1f] text-white hover:border-[#2f2f2f] transition"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handlePromoteStudent}
-                    className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium"
+                    disabled={
+                      (selectedStudent.role === "student" && !promoteToRole) ||
+                      ((promoteToRole === "post_holder" ||
+                        selectedStudent.role === "member") &&
+                        (promoteToRole === "post_holder" ||
+                          promoteToRole === "") &&
+                        !promotePosition)
+                    }
+                    className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Promote
+                    {selectedStudent.role === "student"
+                      ? "Promote"
+                      : "Change Role"}
                   </button>
                 </div>
               </div>

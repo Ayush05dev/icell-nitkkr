@@ -5,16 +5,17 @@ import api from "../../services/api";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import {
   Users,
+  UserCheck,
+  UserX,
+  Briefcase,
   BookOpen,
   Calendar,
   Image,
   Mail,
-  TrendingUp,
-  Activity,
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stats, setStats] = useState(null);
@@ -22,8 +23,14 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user) {
+    // Wait for auth to finish loading before checking user
+    if (!authLoading && !user) {
       navigate("/login");
+      return;
+    }
+
+    // Don't fetch if still waiting for auth
+    if (authLoading) {
       return;
     }
 
@@ -42,7 +49,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   const StatCard = ({ icon: Icon, title, value, color, bgColor }) => (
     <div
@@ -104,54 +111,91 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <StatCard
-              icon={Users}
-              title="Total Students"
-              value={stats?.totalStudents}
-              color="#10b981"
-              bgColor="rgba(16, 185, 129, 0.08)"
-            />
-            <StatCard
-              icon={BookOpen}
-              title="Total Blogs"
-              value={stats?.totalBlogs}
-              color="#6366f1"
-              bgColor="rgba(99, 102, 241, 0.08)"
-            />
-            <StatCard
-              icon={Calendar}
-              title="Total Events"
-              value={stats?.totalEvents}
-              color="#f59e0b"
-              bgColor="rgba(245, 158, 11, 0.08)"
-            />
-            <StatCard
-              icon={Image}
-              title="Gallery Photos"
-              value={stats?.totalPhotos}
-              color="#ec4899"
-              bgColor="rgba(236, 72, 153, 0.08)"
-            />
+          {/* User Statistics Section */}
+          <div className="mb-10">
+            <h2
+              className="text-xl font-bold text-white mb-5"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              User Statistics
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+              <StatCard
+                icon={Users}
+                title="Total Users"
+                value={stats?.totalUsers}
+                color="#06b6d4"
+                bgColor="rgba(6, 182, 212, 0.08)"
+              />
+              <StatCard
+                icon={Users}
+                title="Total Students"
+                value={stats?.totalStudents}
+                color="#10b981"
+                bgColor="rgba(16, 185, 129, 0.08)"
+              />
+              <StatCard
+                icon={UserCheck}
+                title="Total Members"
+                value={stats?.totalMembers}
+                color="#3b82f6"
+                bgColor="rgba(59, 130, 246, 0.08)"
+              />
+              <StatCard
+                icon={Briefcase}
+                title="Post Holders"
+                value={stats?.totalPostHolders}
+                color="#f59e0b"
+                bgColor="rgba(245, 158, 11, 0.08)"
+              />
+              <StatCard
+                icon={UserX}
+                title="Unverified Users"
+                value={stats?.unverifiedUsers}
+                color="#ef4444"
+                bgColor="rgba(239, 68, 68, 0.08)"
+              />
+            </div>
           </div>
 
-          {/* Secondary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <StatCard
-              icon={Mail}
-              title="Total Newsletters"
-              value={stats?.totalNewsletters}
-              color="#a855f7"
-              bgColor="rgba(168, 85, 247, 0.08)"
-            />
-            <StatCard
-              icon={Activity}
-              title="Active Members"
-              value={stats?.activeMembers}
-              color="#06b6d4"
-              bgColor="rgba(6, 182, 212, 0.08)"
-            />
+          {/* Content Statistics Section */}
+          <div>
+            <h2
+              className="text-xl font-bold text-white mb-5"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Content Statistics
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <StatCard
+                icon={Calendar}
+                title="Total Events"
+                value={stats?.totalEvents}
+                color="#f59e0b"
+                bgColor="rgba(245, 158, 11, 0.08)"
+              />
+              <StatCard
+                icon={BookOpen}
+                title="Total Blogs"
+                value={stats?.totalBlogs}
+                color="#6366f1"
+                bgColor="rgba(99, 102, 241, 0.08)"
+              />
+              <StatCard
+                icon={Image}
+                title="Gallery Photos"
+                value={stats?.totalPhotos}
+                color="#ec4899"
+                bgColor="rgba(236, 72, 153, 0.08)"
+              />
+              <StatCard
+                icon={Mail}
+                title="Total Newsletters"
+                value={stats?.totalNewsletters}
+                color="#a855f7"
+                bgColor="rgba(168, 85, 247, 0.08)"
+              />
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -227,7 +271,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-[#888]">User ID:</span>
                   <span className="text-white text-sm font-mono">
-                    {user?.id}
+                    {user?._id}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">

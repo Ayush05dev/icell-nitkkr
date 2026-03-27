@@ -29,7 +29,7 @@ const INITIAL_FORM_DATA = {
 };
 
 export default function AdminEvents() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -48,8 +48,9 @@ export default function AdminEvents() {
 
   // Check auth
   useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    // Wait for auth to finish loading before checking user
+    if (!authLoading && !user) navigate("/login");
+  }, [authLoading, user, navigate]);
 
   // Fetch Events
   const fetchEvents = async () => {

@@ -11,7 +11,8 @@ export async function createEvent(
   image,
   category,
   capacity,
-  createdBy
+  createdBy,
+  years = [] // Array of academic years ['1st', '2nd', etc.]
 ) {
   const db = getDB();
   const events = db.collection("events");
@@ -28,6 +29,7 @@ export async function createEvent(
     capacity,
     attendees: 0,
     status: "upcoming",
+    years: Array.isArray(years) && years.length > 0 ? years : [], // Store selected years
     created_by: createdBy,
     created_at: new Date(),
     updated_at: new Date(),

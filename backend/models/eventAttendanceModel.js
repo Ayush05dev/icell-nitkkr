@@ -2,13 +2,16 @@ import { getDB } from "../config/mongodb.js";
 import { v4 as uuidv4 } from "uuid";
 
 // Mark attendance
+// event_source: "main" = from events collection, "attendance_only" = created just for attendance
 export async function markAttendance(
   eventName,
   eventType,
   eventDate,
   studentId,
   status,
-  markedBy
+  markedBy,
+  eventSource = "attendance_only",
+  years = [] // Array of academic years this event is for
 ) {
   try {
     const db = getDB();
@@ -27,6 +30,10 @@ export async function markAttendance(
           $set: {
             status,
             event_type: eventType, // Update in case the admin changed the type
+            years:
+              Array.isArray(years) && years.length > 0
+                ? years
+                : existing.years || [], // Update years
             marked_at: new Date(),
             marked_by: markedBy,
             updated_at: new Date(),
@@ -47,6 +54,8 @@ export async function markAttendance(
         status,
         marked_at: new Date(),
         marked_by: markedBy,
+        event_source: eventSource, // Track where this event came from
+        years: Array.isArray(years) && years.length > 0 ? years : [], // Store selected years
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -90,15 +99,19 @@ export async function fetchEventAttendance(eventName, eventDate) {
 }
 
 // Fetch student attendance history
+// Only returns records where attendance was actually marked (status is not blank/null)
 export async function fetchStudentEventAttendance(studentId) {
   try {
     const db = getDB();
     const attendance = db.collection("event_attendance");
 
-    // Since event_name and event_date are now saved directly in the record,
-    // we don't need to do a secondary lookup to an 'events' collection anymore!
+    // Query only records where status is actually marked (present, absent, or leave)
+    // Excludes blank/null status entries
     const records = await attendance
-      .find({ student_id: studentId })
+      .find({
+        student_id: studentId,
+        status: { $in: ["present", "absent", "leave"] },
+      })
       .sort({ marked_at: -1 })
       .toArray();
 
@@ -109,25 +122,34 @@ export async function fetchStudentEventAttendance(studentId) {
 }
 
 // Fetch student attendance stats
+// Only counts events where attendance was actually marked (status is not blank/null)
 export async function fetchStudentAttendanceStats(studentId) {
   try {
     const db = getDB();
     const attendance = db.collection("event_attendance");
-    const records = await attendance.find({ student_id: studentId }).toArray();
+
+    // Query only records where status is actually marked (present, absent, OR leave)
+    // Percentage is based on: (present / (present + absent + leave)) * 100
+    const records = await attendance
+      .find({
+        student_id: studentId,
+        status: { $in: ["present", "absent", "leave"] },
+      })
+      .toArray();
+
+    const presentCount = records.filter((r) => r.status === "present").length;
+    const absentCount = records.filter((r) => r.status === "absent").length;
+    const leaveCount = records.filter((r) => r.status === "leave").length;
+    const totalCount = presentCount + absentCount + leaveCount; // Include ALL marked events
 
     const stats = {
-      total: records.length,
-      present: records.filter((r) => r.status === "present").length,
-      absent: records.filter((r) => r.status === "absent").length,
-      leave: records.filter((r) => r.status === "leave").length,
+      total: totalCount,
+      present: presentCount,
+      absent: absentCount,
+      leave: leaveCount,
+      // Percentage = (present / (present + absent + leave)) * 100
       percentage:
-        records.length > 0
-          ? Math.round(
-              (records.filter((r) => r.status === "present").length /
-                records.length) *
-                100
-            )
-          : 0,
+        totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0,
     };
     return { data: stats, error: null };
   } catch (error) {
@@ -135,7 +157,56 @@ export async function fetchStudentAttendanceStats(studentId) {
   }
 }
 
+/**
+ * Fetch attendance stats for multiple students (bulk)
+ * Returns array of {studentId, stats} for efficient loading in student management
+ */
+export async function fetchMultipleStudentsAttendanceStats(studentIds) {
+  try {
+    const db = getDB();
+    const attendance = db.collection("event_attendance");
+
+    const results = {};
+
+    for (const studentId of studentIds) {
+      console.log(`Querying attendance for studentId: ${studentId}`);
+
+      // Query only records where status is actually marked (present, absent, OR leave)
+      const records = await attendance
+        .find({
+          student_id: studentId,
+          status: { $in: ["present", "absent", "leave"] },
+        })
+        .toArray();
+
+      console.log(`  Found ${records.length} attendance records`);
+
+      const presentCount = records.filter((r) => r.status === "present").length;
+      const absentCount = records.filter((r) => r.status === "absent").length;
+      const leaveCount = records.filter((r) => r.status === "leave").length;
+      const totalCount = presentCount + absentCount + leaveCount; // Include ALL marked events
+
+      results[studentId] = {
+        total: totalCount,
+        present: presentCount,
+        absent: absentCount,
+        leave: leaveCount,
+        percentage:
+          totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0,
+      };
+    }
+
+    console.log("Final results:", results);
+    return { data: results, error: null };
+  } catch (error) {
+    console.error("fetchMultipleStudentsAttendanceStats error:", error);
+    return { data: null, error };
+  }
+}
+
 // Helper: Get unique events to populate a dropdown on the frontend
+// Returns both main events (from events collection) and attendance-only events
+// Sorted by created_at DESC (newest first)
 export async function fetchUniqueEvents() {
   try {
     const db = getDB();
@@ -148,6 +219,8 @@ export async function fetchUniqueEvents() {
           $group: {
             _id: { name: "$event_name", date: "$event_date" },
             type: { $first: "$event_type" },
+            source: { $first: "$event_source" }, // Get the source of the event
+            createdAt: { $max: "$created_at" }, // Get the latest created_at for sorting
           },
         },
         {
@@ -156,13 +229,67 @@ export async function fetchUniqueEvents() {
             name: "$_id.name",
             date: "$_id.date",
             type: 1,
+            source: 1,
+            createdAt: 1,
           },
         },
-        { $sort: { date: -1 } },
+        { $sort: { createdAt: -1 } }, // Sort by created_at DESC (newest first)
       ])
       .toArray();
 
     return { data: uniqueEvents, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// Get main events from the events collection (the ones created in AdminEvents section)
+export async function fetchMainEvents() {
+  try {
+    const db = getDB();
+    const events = db.collection("events");
+
+    const mainEvents = await events
+      .find({})
+      .sort({ created_at: -1 }) // Newest first
+      .toArray();
+
+    return { data: mainEvents, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+// Get attendance-only events (created just for tracking, not visible in events section)
+export async function fetchAttendanceOnlyEvents() {
+  try {
+    const db = getDB();
+    const attendance = db.collection("event_attendance");
+
+    const attendanceOnlyEvents = await attendance
+      .aggregate([
+        { $match: { event_source: "attendance_only" } }, // Only attendance-only events
+        {
+          $group: {
+            _id: { name: "$event_name", date: "$event_date" },
+            type: { $first: "$event_type" },
+            createdAt: { $max: "$created_at" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            name: "$_id.name",
+            date: "$_id.date",
+            type: 1,
+            createdAt: 1,
+          },
+        },
+        { $sort: { createdAt: -1 } }, // Newest first
+      ])
+      .toArray();
+
+    return { data: attendanceOnlyEvents, error: null };
   } catch (error) {
     return { data: null, error };
   }

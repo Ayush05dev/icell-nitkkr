@@ -44,13 +44,17 @@ export default function Login() {
       setLoading(false);
 
       // Redirect based on role
-      if (
-        loggedInUser?.role === "admin" ||
-        loggedInUser?.role === "post_holder"
-      ) {
+      if (loggedInUser?.role === "admin") {
         navigate("/admin");
+      } else if (loggedInUser?.role === "post_holder") {
+        navigate("/admin");
+      } else if (loggedInUser?.role === "member") {
+        navigate("/member-profile");
+      } else if (loggedInUser?.role === "student") {
+        navigate("/student-profile");
       } else {
-        navigate("/profile");
+        // Fallback to home if role is not recognized
+        navigate("/");
       }
     } catch (err) {
       setLoading(false);

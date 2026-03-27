@@ -15,10 +15,12 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminGallery from "./pages/admin/AdminGallery";
 import AdminStudents from "./pages/admin/AdminStudents";
 import AdminAttendance from "./pages/admin/AdminAttendance";
+import AdminCertificates from "./pages/admin/AdminCertificates";
 import Login from "./pages/auth/login";
 import RegisterNew from "./pages/auth/register_new";
 import ProfilePage from "./pages/ProfilePage";
 import MemberProfile from "./pages/Profile/MemberProfile";
+import StudentProfile from "./pages/Profile/StudentProfile";
 import TeamPage from "./pages/TeamPage";
 import { AuthProvider } from "./context/AuthContext";
 import AdminProfile from "./pages/admin/AdminProfile";
@@ -127,6 +129,34 @@ export default function App() {
             }
           />
 
+          {/* Student Profile */}
+          <Route
+            path="/student-profile"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <StudentProfile />
+              </div>
+            }
+          />
+
+          {/* Member Profile */}
+          <Route
+            path="/member-profile"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <MemberProfile />
+              </div>
+            }
+          />
+
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterNew />} />
           <Route path="/register_new" element={<RegisterNew />} />
@@ -140,6 +170,7 @@ export default function App() {
           <Route path="/admin/gallery" element={<AdminGallery />} />
           <Route path="/admin/students" element={<AdminStudents />} />
           <Route path="/admin/attendance" element={<AdminAttendance />} />
+          <Route path="/admin/certificates" element={<AdminCertificates />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
