@@ -192,8 +192,10 @@ export default function TeamSection() {
     safeTeam.length > 0 ? [...safeTeam, ...safeTeam, ...safeTeam] : [];
 
   // Width of one card + gap in px — must match the Tailwind classes below
-  const CARD_W = 280; // w-[280px]
-  const GAP = 40; // gap-10 = 2.5rem = 40px
+  const CARD_W =
+    typeof window !== "undefined" && window.innerWidth < 640 ? 200 : 280;
+  const GAP =
+    typeof window !== "undefined" && window.innerWidth < 640 ? 20 : 40;
   const loopPx = safeTeam.length * (CARD_W + GAP);
 
   return (
@@ -243,7 +245,7 @@ export default function TeamSection() {
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 lg:w-48 bg-gradient-to-l from-black via-black/90 to-transparent z-10 pointer-events-none" />
 
           <motion.div
-            className="flex gap-10"
+            className="flex gap-5 sm:gap-10"
             animate={{ x: [0, -loopPx] }}
             transition={{
               x: {
@@ -259,16 +261,16 @@ export default function TeamSection() {
                 key={`${member.id}-${index}`}
                 onHoverStart={() => setHoveredIndex(index)}
                 onHoverEnd={() => setHoveredIndex(null)}
-                className="flex-shrink-0 w-[280px] group cursor-pointer"
+                className="flex-shrink-0 w-52 sm:w-[280px] group cursor-pointer"
               >
                 <motion.div
                   whileHover={{ y: -12 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className="relative h-full"
                 >
-                  <div className="relative p-6 rounded-3xl border border-white/10 group-hover:border-yellow-400/30 transition-all duration-500 h-full flex flex-col">
+                  <div className="relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 group-hover:border-yellow-400/30 transition-all duration-500 h-full flex flex-col">
                     {/* Avatar */}
-                    <div className="relative mx-auto w-40 h-40 mb-5 flex-shrink-0">
+                    <div className="relative mx-auto w-28 sm:w-40 h-28 sm:h-40 mb-3 sm:mb-5 flex-shrink-0">
                       <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-yellow-400/40">
                         <img
                           src={
@@ -284,17 +286,17 @@ export default function TeamSection() {
                     </div>
 
                     {/* Name + position */}
-                    <div className="text-center space-y-2 flex-grow flex flex-col items-center justify-start mb-5">
-                      <h3 className="text-xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300 leading-tight line-clamp-2 w-full px-1 min-h-[3.5rem] flex items-center justify-center">
+                    <div className="text-center space-y-1 sm:space-y-2 flex-grow flex flex-col items-center justify-start mb-3 sm:mb-5">
+                      <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300 leading-tight line-clamp-2 w-full px-1 min-h-[3rem] sm:min-h-[3.5rem] flex items-center justify-center">
                         {member.name}
                       </h3>
-                      <p className="text-yellow-400/80 text-sm font-medium tracking-wide uppercase line-clamp-2 w-full px-1 min-h-[2.5rem] flex items-center justify-center">
+                      <p className="text-yellow-400/80 text-xs sm:text-sm font-medium tracking-wide uppercase line-clamp-2 w-full px-1 min-h-[2rem] sm:min-h-[2.5rem] flex items-center justify-center">
                         {member.position}
                       </p>
                     </div>
 
                     {/* Social links */}
-                    <div className="mt-auto flex gap-2">
+                    <div className="mt-auto flex gap-1.5 sm:gap-2">
                       <motion.a
                         href={member.linkedin || "#"}
                         target="_blank"
@@ -305,13 +307,15 @@ export default function TeamSection() {
                           if (!member.linkedin || member.linkedin === "#")
                             e.preventDefault();
                         }}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-400/30 text-white/60 hover:text-yellow-400 transition-all duration-300 group/btn"
+                        className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-400/30 text-white/60 hover:text-yellow-400 transition-all duration-300 group/btn"
                       >
                         <Linkedin
-                          size={18}
-                          className="group-hover/btn:rotate-12 transition-transform flex-shrink-0"
+                          size={16}
+                          className="sm:w-[18px] sm:h-[18px] group-hover/btn:rotate-12 transition-transform flex-shrink-0"
                         />
-                        <span className="text-sm font-medium">LinkedIn</span>
+                        <span className="hidden sm:inline text-sm font-medium">
+                          LinkedIn
+                        </span>
                       </motion.a>
 
                       <motion.a
@@ -324,13 +328,15 @@ export default function TeamSection() {
                           if (!member.instagram || member.instagram === "#")
                             e.preventDefault();
                         }}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-white/60 hover:text-pink-400 transition-all duration-300 group/btn"
+                        className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-white/60 hover:text-pink-400 transition-all duration-300 group/btn"
                       >
                         <Instagram
-                          size={18}
-                          className="group-hover/btn:rotate-12 transition-transform flex-shrink-0"
+                          size={16}
+                          className="sm:w-[18px] sm:h-[18px] group-hover/btn:rotate-12 transition-transform flex-shrink-0"
                         />
-                        <span className="text-sm font-medium">Instagram</span>
+                        <span className="hidden sm:inline text-sm font-medium">
+                          Instagram
+                        </span>
                       </motion.a>
                     </div>
                   </div>

@@ -32,19 +32,16 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative mt-12 w-full flex justify-center px-6 pb-10">
-
+    <footer className="relative mt-12 w-full flex justify-center px-4 sm:px-6 pb-8 sm:pb-10">
       {/* Outer Glass Container */}
       <motion.div
         initial="hidden"
         whileInView="visible"
         variants={containerVariants}
         viewport={{ once: true, margin: "-100px" }}
-        className="w-full max-w-8xl bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl shadow-xl p-12"
+        className="w-full max-w-8xl bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 md:p-12"
       >
-
-        <div className="grid md:grid-cols-4 gap-12">
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-12">
           {/* About */}
           <motion.div variants={itemVariants}>
             <h2 className="text-white text-lg font-semibold mb-4">
@@ -52,8 +49,8 @@ export default function Footer() {
             </h2>
             <p className="text-white/60 text-sm leading-relaxed">
               Official technical society of NIT Kurukshetra fostering
-              creativity, innovation and entrepreneurship through
-              student-driven initiatives.
+              creativity, innovation and entrepreneurship through student-driven
+              initiatives.
             </p>
           </motion.div>
 
@@ -102,9 +99,7 @@ export default function Footer() {
             <h3 className="text-white font-medium mb-4">Contact</h3>
             <div className="flex items-start gap-3 text-white/60 text-sm">
               <MapPin size={18} className="mt-1" />
-              <span>
-                NIT Kurukshetra, Haryana, India - 136119
-              </span>
+              <span>NIT Kurukshetra, Haryana, India - 136119</span>
             </div>
           </motion.div>
         </div>
@@ -112,11 +107,13 @@ export default function Footer() {
         {/* Divider */}
         <motion.div
           variants={itemVariants}
-          className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/40"
+          className="mt-8 sm:mt-10 md:mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center text-xs sm:text-sm text-white/40 gap-4 sm:gap-6"
         >
-          <p>© 2026 Innovation Cell, NIT Kurukshetra.</p>
+          <p className="text-center sm:text-left">
+            © 2026 Innovation Cell, NIT Kurukshetra.
+          </p>
 
-          <div className="flex gap-6 mt-4 md:mt-0">
+          <div className="flex gap-4 sm:gap-6">
             <a href="#" className="hover:text-white transition">
               Privacy Policy
             </a>

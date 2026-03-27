@@ -164,7 +164,10 @@ export default function AdminTeams() {
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 overflow-auto">
-        <div className="p-8 min-h-screen" style={{ background: "#0d0d0d" }}>
+        <div
+          className="p-8 min-h-screen max-md:pt-20"
+          style={{ background: "#0d0d0d" }}
+        >
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1

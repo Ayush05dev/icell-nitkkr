@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Download, Plus } from "lucide-react";
+import { Trash2, ExternalLink, Edit2 } from "lucide-react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 
 const API = "http://localhost:5000/api/newsletters";
@@ -9,14 +9,14 @@ export default function AdminNewsletters() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newsletters, setNewsletters] = useState([]);
-  const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [form, setForm] = useState({ title: "", file: null });
+  const [uploadError, setUploadError] = useState("");
+  const [form, setForm] = useState({ title: "", link: "" });
+  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const fileRef = useRef();
 
-  const getToken = () => localStorage.getItem("access_token");
+  const getToken = () => localStorage.getItem("accessToken");
 
   // Fetch newsletters
   useEffect(() => {
@@ -34,63 +34,89 @@ export default function AdminNewsletters() {
     fetchNewsletters();
   }, []);
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === "application/pdf") {
-      setForm((f) => ({ ...f, file }));
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) setForm((f) => ({ ...f, file }));
+  // Validate Google Drive URL
+  const isValidGoogleDriveLink = (url) => {
+    if (!url || typeof url !== "string") return false;
+    const trimmedUrl = url.trim();
+    return (
+      trimmedUrl.includes("drive.google.com") ||
+      trimmedUrl.includes("docs.google.com")
+    );
   };
 
   const handleUpload = async () => {
-    if (!form.title || !form.file) return;
+    if (!form.title || !form.link) {
+      setUploadError("Please fill in all fields");
+      return;
+    }
+
+    if (!isValidGoogleDriveLink(form.link)) {
+      setUploadError(
+        "Invalid Google Drive link. Please use a drive.google.com or docs.google.com link"
+      );
+      return;
+    }
 
     setUploading(true);
+    setUploadError("");
+
     try {
-      // In production, upload to storage service (S3, Supabase Storage, etc.)
-      // For now, we'll simulate with a data URL
-      const fileSize = form.file.size;
-      const fileSizeDisplay = `${(fileSize / 1024 / 1024).toFixed(1)} MB`;
+      const method = editingId ? "PATCH" : "POST";
+      const endpoint = editingId ? `${API}/${editingId}` : API;
 
-      // TODO: Upload file to storage and get URL
-      const file_url = "#"; // Replace with actual upload URL
-
-      const res = await fetch(API, {
-        method: "POST",
+      const res = await fetch(endpoint, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
           title: form.title,
-          file_url,
-          file_size: fileSizeDisplay,
+          link: form.link,
         }),
       });
 
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to save newsletter");
+      }
 
       const data = await res.json();
-      setNewsletters((prev) => [data.newsletter, ...prev]);
-      setForm({ title: "", file: null });
+
+      if (editingId) {
+        setNewsletters((prev) =>
+          prev.map((n) => (n._id === editingId ? data.newsletter : n))
+        );
+        setEditingId(null);
+      } else {
+        setNewsletters((prev) => [data.newsletter, ...prev]);
+      }
+
+      setForm({ title: "", link: "" });
       setUploadSuccess(true);
       setTimeout(() => setUploadSuccess(false), 3000);
     } catch (err) {
-      console.error("Upload error:", err);
-      alert("Failed to upload newsletter");
+      console.error("Error:", err);
+      setUploadError(err.message || "Failed to save newsletter");
     } finally {
       setUploading(false);
     }
   };
 
+  const handleEdit = (newsletter) => {
+    setEditingId(newsletter._id);
+    setForm({ title: newsletter.title, link: newsletter.file_url });
+    setUploadError("");
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setForm({ title: "", link: "" });
+    setUploadError("");
+  };
+
   const handleDelete = async (id) => {
-    if (!confirm("Delete this newsletter?")) return;
+    if (!confirm("Are you sure you want to delete this newsletter?")) return;
 
     try {
       const res = await fetch(`${API}/${id}`, {
@@ -100,20 +126,15 @@ export default function AdminNewsletters() {
 
       if (!res.ok) throw new Error("Delete failed");
 
-      setNewsletters((prev) => prev.filter((n) => n.id !== id));
+      setNewsletters((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
       console.error("Delete error:", err);
       alert("Failed to delete newsletter");
     }
   };
 
-  const handleDownload = async (id) => {
-    try {
-      await fetch(`${API}/${id}/download`, { method: "POST" });
-      // TODO: Download the file
-    } catch (err) {
-      console.error("Download error:", err);
-    }
+  const handleOpenLink = (url) => {
+    window.open(url, "_blank");
   };
 
   if (loading) {
@@ -128,7 +149,10 @@ export default function AdminNewsletters() {
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 overflow-auto">
-        <div className="p-8 min-h-screen" style={{ background: "#0d0d0d" }}>
+        <div
+          className="p-8 min-h-screen max-md:pt-20"
+          style={{ background: "#0d0d0d" }}
+        >
           <div className="mb-8">
             <h1
               className="text-3xl font-bold text-white"
@@ -137,81 +161,100 @@ export default function AdminNewsletters() {
               Newsletter Management
             </h1>
             <p className="text-[#555] text-sm mt-1">
-              Upload and manage society newsletters for members
+              Create and manage society newsletters with Google Drive links
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Upload Panel */}
+            {/* Add/Edit Panel */}
             <div className="lg:col-span-1">
               <div
-                className="rounded-xl border p-6"
+                className="rounded-xl border p-6 sticky top-6"
                 style={{ background: "#111", borderColor: "#1f1f1f" }}
               >
                 <h2
                   className="text-white font-semibold mb-5"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                  Upload Newsletter
+                  {editingId ? "Edit Newsletter" : "Add Newsletter"}
                 </h2>
 
                 <div className="mb-4">
-                  <label className="text-[#666] text-xs mb-1.5 block">
+                  <label className="text-[#666] text-xs mb-1.5 block font-medium">
                     Newsletter Title *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Monthly Digest - March 2025"
+                    placeholder="e.g. Monthly Digest - March 2026"
                     value={form.title}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, title: e.target.value }))
                     }
-                    className="w-full px-3 py-2.5 rounded-lg text-sm text-white outline-none border focus:border-purple-500 transition-colors"
-                    style={{ background: "#0d0d0d", borderColor: "#2a2a2a" }}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm text-white outline-none border transition-colors"
+                    style={{
+                      background: "#0d0d0d",
+                      borderColor: form.title ? "#a855f7" : "#2a2a2a",
+                    }}
                   />
                 </div>
 
-                <div
-                  onDragOver={() => setDragOver(true)}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  className="mb-4 p-4 rounded-lg border-2 border-dashed text-center cursor-pointer transition-colors"
-                  style={{
-                    borderColor: dragOver ? "#a855f7" : "#2a2a2a",
-                    background: dragOver ? "#a855f710" : "#0d0d0d",
-                  }}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Plus size={24} className="mx-auto mb-2 text-[#555]" />
-                  <p className="text-[#555] text-xs">
-                    {form.file ? form.file.name : "Drop PDF here or click"}
-                  </p>
+                <div className="mb-4">
+                  <label className="text-[#666] text-xs mb-1.5 block font-medium">
+                    Google Drive Link *
+                  </label>
                   <input
-                    ref={fileRef}
-                    type="file"
-                    accept=".pdf"
-                    className="hidden"
-                    onChange={handleFileSelect}
+                    type="url"
+                    placeholder="https://drive.google.com/file/d/..."
+                    value={form.link}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, link: e.target.value }))
+                    }
+                    className="w-full px-3 py-2.5 rounded-lg text-sm text-white outline-none border transition-colors"
+                    style={{
+                      background: "#0d0d0d",
+                      borderColor: form.link ? "#a855f7" : "#2a2a2a",
+                    }}
                   />
+                  <p className="text-[#555] text-xs mt-2 leading-relaxed">
+                    📌 Get shareable link from Google Drive: Right-click file →
+                    Share → Copy link
+                  </p>
                 </div>
 
-                {uploadSuccess && (
-                  <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm">
-                    ✓ Newsletter uploaded successfully!
+                {uploadError && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+                    ⚠ {uploadError}
                   </div>
                 )}
 
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading || !form.title || !form.file}
-                  className="w-full px-4 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50"
-                  style={{
-                    background: "linear-gradient(135deg, #a855f7, #6366f1)",
-                    color: "white",
-                  }}
-                >
-                  {uploading ? "Uploading..." : "Upload Newsletter"}
-                </button>
+                {uploadSuccess && (
+                  <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm">
+                    ✓ Newsletter saved successfully!
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading || !form.title || !form.link}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: "linear-gradient(135deg, #a855f7, #6366f1)",
+                      color: "white",
+                    }}
+                  >
+                    {uploading ? "Saving..." : editingId ? "Update" : "Add"}
+                  </button>
+                  {editingId && (
+                    <button
+                      onClick={handleCancel}
+                      className="px-4 py-2.5 rounded-lg font-semibold text-sm border transition-all hover:bg-[#1f1f1f]"
+                      style={{ borderColor: "#2a2a2a", color: "#666" }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -224,40 +267,60 @@ export default function AdminNewsletters() {
                 className="text-white font-semibold mb-5"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                Recent Newsletters ({newsletters.length})
+                Newsletters ({newsletters.length})
               </h2>
 
               {newsletters.length === 0 ? (
-                <p className="text-[#555] text-sm text-center py-8">
-                  No newsletters yet
-                </p>
+                <div
+                  className="p-12 text-center rounded-lg"
+                  style={{ background: "#0d0d0d" }}
+                >
+                  <p className="text-[#555] text-sm">
+                    No newsletters yet. Create one to get started!
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {newsletters.map((newsletter) => (
                     <div
-                      key={newsletter.id}
-                      className="flex items-center justify-between p-4 rounded-lg hover:bg-[#0d0d0d] transition-colors border"
-                      style={{ borderColor: "#1f1f1f" }}
+                      key={newsletter._id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg transition-all border"
+                      style={{
+                        borderColor: "#1f1f1f",
+                        background:
+                          editingId === newsletter._id
+                            ? "#1a1a1a"
+                            : "transparent",
+                      }}
                     >
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 mb-3 sm:mb-0">
                         <p className="text-white font-medium truncate">
                           {newsletter.title}
                         </p>
                         <p className="text-[#555] text-xs mt-1">
                           {new Date(newsletter.created_at).toLocaleDateString()}{" "}
-                          · {newsletter.downloads || 0} downloads
+                          · {newsletter.downloads || 0} opens
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleDownload(newsletter.id)}
-                          className="p-2 rounded-lg hover:bg-[#1f1f1f] transition-colors"
+                          onClick={() => handleOpenLink(newsletter.file_url)}
+                          className="p-2 rounded-lg hover:bg-blue-500/20 transition-colors"
+                          title="Open in Google Drive"
                         >
-                          <Download size={18} className="text-[#666]" />
+                          <ExternalLink size={18} className="text-blue-400" />
                         </button>
                         <button
-                          onClick={() => handleDelete(newsletter.id)}
+                          onClick={() => handleEdit(newsletter)}
+                          className="p-2 rounded-lg hover:bg-yellow-500/20 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 size={18} className="text-yellow-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(newsletter._id)}
                           className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                          title="Delete"
                         >
                           <Trash2 size={18} className="text-red-500" />
                         </button>

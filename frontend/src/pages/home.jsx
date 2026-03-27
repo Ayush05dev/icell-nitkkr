@@ -3,11 +3,12 @@ import Footer from "../components/layout/Footer";
 import HeroSection from "../components/layout/HeroSection";
 import EventSection from "../components/layout/EventSection";
 import TeamSection from "../components/layout/TeamSection";
+import NewsletterSection from "../components/layout/NewsletterSection";
+import GallerySection from "../components/layout/GallerySection";
 
 export default function Home() {
   return (
     <div className="min-h-screen  flex flex-col bg-black text-white">
-
       <div className="fixed top-6 w-full z-50 flex justify-center">
         <Navbar />
       </div>
@@ -24,6 +25,16 @@ export default function Home() {
         <div className="h-px bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent" />
 
         <TeamSection />
+
+        {/* Subtle section divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent" />
+
+        <GallerySection />
+
+        {/* Subtle section divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent" />
+
+        <NewsletterSection />
       </main>
 
       <Footer />

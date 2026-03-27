@@ -17,26 +17,26 @@ export default function EventSection() {
       x: -200,
       y: -140,
       rotate: -8,
-      hover: { x: -260, y: -100, rotate: -16 }
+      hover: { x: -260, y: -100, rotate: -16 },
     },
     {
       x: -160,
       y: -160,
       rotate: -4,
-      hover: { x: -170, y: -190, rotate: -6 }
+      hover: { x: -170, y: -190, rotate: -6 },
     },
     {
       x: -120,
       y: -160,
       rotate: 4,
-      hover: { x: -90, y: -190, rotate: 6 }
+      hover: { x: -90, y: -190, rotate: 6 },
     },
     {
       x: -80,
       y: -140,
       rotate: 8,
-      hover: { x: -10, y: -100, rotate: 16 }
-    }
+      hover: { x: -10, y: -100, rotate: 16 },
+    },
   ];
 
   const containerVariants = {
@@ -60,10 +60,9 @@ export default function EventSection() {
   };
 
   return (
-    <section className="relative min-h-screen bg-black px-6 py-24 overflow-hidden">
-
+    <section className="relative min-h-screen bg-black px-4 sm:px-6 py-12 sm:py-20 md:py-24 overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center min-h-[70vh]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 md:gap-12 md:gap-16 items-center min-h-[60vh] sm:min-h-[70vh]">
           {/* Left: Society text - staggered entrance animation */}
           <motion.div
             initial="hidden"
@@ -75,7 +74,7 @@ export default function EventSection() {
             {/* Small badge above title */}
             <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-4"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-3 sm:mb-4"
             >
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               <span className="text-yellow-400/90 text-xs font-medium tracking-wider uppercase">
@@ -85,23 +84,24 @@ export default function EventSection() {
 
             <motion.h2
               variants={itemVariants}
-              className="text-5xl md:text-6xl font-bold bg-yellow-500 bg-clip-text text-transparent tracking-tight"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold bg-yellow-500 bg-clip-text text-transparent tracking-tight"
             >
               InnoKshetra
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
-              className="text-white/90 mt-6 text-lg leading-relaxed"
+              className="text-white/90 mt-4 sm:mt-6 text-base sm:text-lg leading-relaxed"
             >
               Our flagship innovation event where minds collide, ideas ignite,
-              and startups are born. Innovation Cell NIT Kurukshetra brings together
-              students, mentors, and industry leaders to turn ideas into impact.
+              and startups are born. Innovation Cell NIT Kurukshetra brings
+              together students, mentors, and industry leaders to turn ideas
+              into impact.
             </motion.p>
 
             <motion.p
               variants={itemVariants}
-              className="text-white/60 mt-4 text-base leading-relaxed"
+              className="text-white/60 mt-3 sm:mt-4 text-sm sm:text-base leading-relaxed"
             >
               From hackathons and workshops to speaker sessions and networking,
               we build a culture of creativity and problem-solving. Join us to
@@ -110,14 +110,14 @@ export default function EventSection() {
 
             <motion.div
               variants={itemVariants}
-              className="mt-8 flex flex-wrap gap-3"
+              className="mt-6 sm:mt-8 flex flex-wrap gap-2 sm:gap-3"
             >
               {["Hackathons", "Workshops", "Speaker Sessions"].map((tag, i) => (
                 <motion.span
                   key={tag}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/80 text-sm hover:bg-white/10 hover:border-yellow-500/30 transition-all duration-300 cursor-default"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 text-white/80 text-xs sm:text-sm hover:bg-white/10 hover:border-yellow-500/30 transition-all duration-300 cursor-default"
                 >
                   {tag}
                 </motion.span>
@@ -125,11 +125,14 @@ export default function EventSection() {
             </motion.div>
 
             {/* Call to action button */}
-            <motion.div variants={itemVariants} className="mt-10">
+            <motion.div variants={itemVariants} className="mt-8 sm:mt-10">
               <motion.button
-                whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(250, 204, 21, 0.3)" }}
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: "0 0 30px rgba(250, 204, 21, 0.3)",
+                }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative px-8 py-3.5 rounded-full bg-yellow-400 text-zinc-950 font-semibold text-sm overflow-hidden transition-all duration-300"
+                className="group relative px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-yellow-400 text-zinc-950 font-semibold text-sm sm:text-base overflow-hidden transition-all duration-300"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   Explore Events
@@ -156,10 +159,10 @@ export default function EventSection() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             viewport={{ once: true, margin: "-100px" }}
-            className="relative order-1 md:order-2 flex justify-center md:justify-end items-center min-h-[320px] md:min-h-[380px]"
+            className="relative order-1 md:order-2 flex justify-center md:justify-end items-center min-h-[300px] sm:min-h-[340px] md:min-h-[380px]"
           >
             <div
-              className="relative w-[280px] h-[340px] md:w-[320px] md:h-[380px] cursor-pointer"
+              className="relative w-[240px] h-[300px] sm:w-[280px] sm:h-[340px] md:w-[320px] md:h-[380px] cursor-pointer"
               onMouseEnter={() => setStackHover(true)}
               onMouseLeave={() => setStackHover(false)}
             >
@@ -208,8 +211,6 @@ export default function EventSection() {
                       loading="lazy"
                       decoding="async"
                     />
-
-                    
                   </motion.div>
                 </div>
               ))}

@@ -94,7 +94,7 @@ export default function AdminProfile() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="p-8 max-md:pt-20">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Admin Profile</h1>

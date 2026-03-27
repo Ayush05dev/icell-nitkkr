@@ -7,6 +7,16 @@ import {
   incrementDownloads,
 } from "../models/newsletterModel.js";
 
+// Validate Google Drive URL
+const isValidGoogleDriveLink = (url) => {
+  if (!url || typeof url !== "string") return false;
+  const trimmedUrl = url.trim();
+  return (
+    trimmedUrl.includes("drive.google.com") ||
+    trimmedUrl.includes("docs.google.com")
+  );
+};
+
 // GET /api/newsletters - fetch all
 export const getAllNewsletters = async (req, res) => {
   try {
@@ -33,16 +43,26 @@ export const getNewsletterById = async (req, res) => {
 // POST /api/newsletters - admin only, create newsletter
 export const createNewsletter = async (req, res) => {
   try {
-    const { title, file_url, file_size } = req.body;
+    const { title, link } = req.body;
 
-    if (!title || !file_url) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // Validate required fields
+    if (!title || !link) {
+      return res
+        .status(400)
+        .json({ error: "Missing required fields: title and link" });
+    }
+
+    // Validate Google Drive link
+    if (!isValidGoogleDriveLink(link)) {
+      return res.status(400).json({
+        error:
+          "Invalid Google Drive link. Link must contain drive.google.com or docs.google.com",
+      });
     }
 
     const newsletterData = {
-      title,
-      file_url,
-      file_size: file_size || null,
+      title: title.trim(),
+      file_url: link.trim(),
       downloads: 0,
       uploaded_by: req.user.userId,
       created_at: new Date().toISOString(),
@@ -51,7 +71,9 @@ export const createNewsletter = async (req, res) => {
     const { data, error } = await insertNewsletter(newsletterData);
     if (error) return res.status(400).json({ error: error.message });
 
-    res.status(201).json({ message: "Newsletter created", newsletter: data });
+    res
+      .status(201)
+      .json({ message: "Newsletter created successfully", newsletter: data });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -61,17 +83,36 @@ export const createNewsletter = async (req, res) => {
 export const editNewsletter = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, file_url, file_size } = req.body;
+    const { title, link } = req.body;
+
+    // Validate that at least one field is provided
+    if (!title && !link) {
+      return res
+        .status(400)
+        .json({ error: "At least one field (title or link) is required" });
+    }
 
     const updates = {};
-    if (title) updates.title = title;
-    if (file_url) updates.file_url = file_url;
-    if (file_size) updates.file_size = file_size;
+
+    if (title) {
+      updates.title = title.trim();
+    }
+
+    if (link) {
+      // Validate Google Drive link if provided
+      if (!isValidGoogleDriveLink(link)) {
+        return res.status(400).json({
+          error:
+            "Invalid Google Drive link. Link must contain drive.google.com or docs.google.com",
+        });
+      }
+      updates.file_url = link.trim();
+    }
 
     const { data, error } = await updateNewsletter(id, updates);
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) return res.status(404).json({ error: error.message });
 
-    res.json({ message: "Newsletter updated", newsletter: data });
+    res.json({ message: "Newsletter updated successfully", newsletter: data });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
