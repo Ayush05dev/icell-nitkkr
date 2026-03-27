@@ -48,8 +48,7 @@ export default function AdminAttendance() {
   // Academic years available (stored as strings in database: "1st", "2nd", "3rd", "4th")
   const AVAILABLE_YEARS = ["1", "2", "3", "4"];
 
-  const getToken = () =>
-    localStorage.getItem("accessToken") || localStorage.getItem("access_token");
+  const getToken = () => localStorage.getItem("accessToken");
 
   // Check authorization
   useEffect(() => {
@@ -363,7 +362,7 @@ export default function AdminAttendance() {
   return (
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 overflow-auto p-8 max-md:pt-20">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -711,7 +710,10 @@ export default function AdminAttendance() {
                 {/* Year Filter Checkboxes */}
                 <div className="flex gap-2 flex-wrap">
                   {AVAILABLE_YEARS.map((year) => (
-                    <label key={year} className="flex items-center gap-2 cursor-pointer">
+                    <label
+                      key={year}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <input
                         type="checkbox"
                         checked={eventYears.includes(year)}
@@ -724,7 +726,9 @@ export default function AdminAttendance() {
                         }}
                         className="w-4 h-4 rounded border-[#2f2f2f] cursor-pointer"
                       />
-                      <span className="text-sm text-[#aaa] hover:text-white transition">{year} Year</span>
+                      <span className="text-sm text-[#aaa] hover:text-white transition">
+                        {year} Year
+                      </span>
                     </label>
                   ))}
                 </div>

@@ -53,20 +53,36 @@ export default function AdminDashboard() {
 
   const StatCard = ({ icon: Icon, title, value, color, bgColor }) => (
     <div
-      className="p-6 rounded-xl border"
+      className="p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border"
       style={{
         background: bgColor,
         borderColor: color,
       }}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
         <div>
-          <p className="text-[#888] text-sm font-medium mb-2">{title}</p>
-          <h3 className="text-3xl font-bold" style={{ color: color }}>
+          <p className="text-[#888] text-xs sm:text-sm font-medium mb-1 sm:mb-2">
+            {title}
+          </p>
+          <h3
+            className="text-xl sm:text-2xl md:text-3xl font-bold"
+            style={{ color: color }}
+          >
             {value || 0}
           </h3>
         </div>
-        <Icon size={28} style={{ color }} strokeWidth={1.5} />
+        <Icon
+          size={24}
+          className="hidden sm:block"
+          style={{ color }}
+          strokeWidth={1.5}
+        />
+        <Icon
+          size={20}
+          className="block sm:hidden"
+          style={{ color }}
+          strokeWidth={1.5}
+        />
       </div>
     </div>
   );
@@ -91,16 +107,19 @@ export default function AdminDashboard() {
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 overflow-auto">
-        <div className="p-8 min-h-screen" style={{ background: "#0d0d0d" }}>
+        <div
+          className="p-4 sm:p-6 md:p-8 min-h-screen max-md:pt-20"
+          style={{ background: "#0d0d0d" }}
+        >
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <h1
-              className="text-4xl font-bold text-white mb-2"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               Dashboard
             </h1>
-            <p className="text-[#555] text-sm">
+            <p className="text-[#555] text-xs sm:text-sm">
               Welcome back, {user?.email || "Admin"}! Here's what's happening.
             </p>
           </div>
@@ -112,14 +131,14 @@ export default function AdminDashboard() {
           )}
 
           {/* User Statistics Section */}
-          <div className="mb-10">
+          <div className="mb-8 sm:mb-10">
             <h2
-              className="text-xl font-bold text-white mb-5"
+              className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-5"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               User Statistics
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 mb-8">
               <StatCard
                 icon={Users}
                 title="Total Users"
@@ -161,12 +180,12 @@ export default function AdminDashboard() {
           {/* Content Statistics Section */}
           <div>
             <h2
-              className="text-xl font-bold text-white mb-5"
+              className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-5"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               Content Statistics
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
               <StatCard
                 icon={Calendar}
                 title="Total Events"
@@ -199,17 +218,17 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="mt-12">
+          <div className="mt-10 sm:mt-12">
             <h2
-              className="text-xl font-bold text-white mb-4"
+              className="text-lg sm:text-xl font-bold text-white mb-4"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <button
                 onClick={() => navigate("/admin/students")}
-                className="p-4 rounded-lg border transition-all hover:border-green-500 hover:shadow-lg hover:shadow-green-500/20"
+                className="p-4 sm:p-6 rounded-lg border transition-all hover:border-green-500 hover:shadow-lg hover:shadow-green-500/20"
                 style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
               >
                 <Users size={24} className="mb-2 text-green-500" />
@@ -223,7 +242,7 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => navigate("/admin/events")}
-                className="p-4 rounded-lg border transition-all hover:border-yellow-500 hover:shadow-lg hover:shadow-yellow-500/20"
+                className="p-4 sm:p-6 rounded-lg border transition-all hover:border-yellow-500 hover:shadow-lg hover:shadow-yellow-500/20"
                 style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
               >
                 <Calendar size={24} className="mb-2 text-yellow-500" />
@@ -237,7 +256,7 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => navigate("/admin/blogs")}
-                className="p-4 rounded-lg border transition-all hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20"
+                className="p-4 sm:p-6 rounded-lg border transition-all hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20"
                 style={{ borderColor: "#1f1f1f", background: "#0d0d0d" }}
               >
                 <BookOpen size={24} className="mb-2 text-blue-500" />

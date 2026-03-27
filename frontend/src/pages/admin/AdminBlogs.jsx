@@ -139,9 +139,9 @@ export default function AdminBlogs() {
 
       // Optimistically update local state
       setBlogs((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+        prev.map((b) => (b._id === id ? { ...b, status: newStatus } : b))
       );
-      if (preview?.id === id) setPreview((p) => ({ ...p, status: newStatus }));
+      if (preview?._id === id) setPreview((p) => ({ ...p, status: newStatus }));
     } catch (err) {
       alert("Failed to update status: " + err.message);
     } finally {
@@ -186,6 +186,7 @@ export default function AdminBlogs() {
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 overflow-auto">
         <div
+          className="max-md:pt-20"
           style={{
             padding: "32px",
             minHeight: "100vh",
@@ -350,7 +351,7 @@ export default function AdminBlogs() {
                 const st = statusStyle[blog.status] || statusStyle.pending;
                 return (
                   <div
-                    key={blog.id}
+                    key={blog._id}
                     onClick={() => setPreview(blog)}
                     style={{
                       background: "#111",
@@ -490,7 +491,7 @@ export default function AdminBlogs() {
                         </button>
                         {blog.status !== "approved" && (
                           <button
-                            onClick={() => updateStatus(blog.id, "approved")}
+                            onClick={() => updateStatus(blog._id, "approved")}
                             disabled={actionLoading}
                             style={{
                               flex: 1,
@@ -510,7 +511,7 @@ export default function AdminBlogs() {
                         )}
                         {blog.status !== "rejected" && (
                           <button
-                            onClick={() => updateStatus(blog.id, "rejected")}
+                            onClick={() => updateStatus(blog._id, "rejected")}
                             disabled={actionLoading}
                             style={{
                               flex: 1,

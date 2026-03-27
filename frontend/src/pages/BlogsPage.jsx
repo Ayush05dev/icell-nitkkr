@@ -8,16 +8,34 @@ import api from "../services/api";
 // ── Slider ────────────────────────────────────────────────────────────────────
 function BlogSlider({ blogs, onCardClick }) {
   const [startIdx, setStartIdx] = useState(0);
-  const visible = 3;
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1024
+  );
+
+  // Determine visible items based on screen width
+  const getVisibleCount = () => {
+    if (windowWidth < 640) return 1; // mobile
+    if (windowWidth < 1024) return 2; // tablet
+    return 3; // desktop
+  };
+
+  const visible = getVisibleCount();
   const canPrev = startIdx > 0;
   const canNext = startIdx + visible < blogs.length;
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div style={{ position: "relative" }}>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: `repeat(${visible}, 1fr)`,
           gap: "20px",
           overflow: "hidden",
         }}
@@ -35,7 +53,14 @@ function BlogSlider({ blogs, onCardClick }) {
         ))}
       </div>
       {blogs.length > visible && (
-        <div style={{ display: "flex", gap: "8px", marginTop: "20px" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginTop: "20px",
+            flexWrap: "wrap",
+          }}
+        >
           {[
             {
               label: "← Prev",
@@ -54,7 +79,7 @@ function BlogSlider({ blogs, onCardClick }) {
               onClick={action}
               disabled={!enabled}
               style={{
-                padding: "9px 22px",
+                padding: "clamp(6px 16px, 2vw, 9px 22px)",
                 borderRadius: "999px",
                 border: enabled
                   ? "1.5px solid rgba(255,255,255,0.22)"
@@ -66,10 +91,12 @@ function BlogSlider({ blogs, onCardClick }) {
                   ? "rgba(255,255,255,0.75)"
                   : "rgba(255,255,255,0.18)",
                 cursor: enabled ? "pointer" : "not-allowed",
-                fontSize: "13px",
+                fontSize: "clamp(11px, 2vw, 13px)",
                 fontFamily: "'DM Sans', sans-serif",
                 fontWeight: 500,
                 transition: "all 0.22s ease",
+                flex: "1 1 auto",
+                minWidth: "100px",
               }}
             >
               {label}
@@ -87,18 +114,20 @@ function SectionTitle({ title }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "16px",
-        marginBottom: "24px",
+        gap: "clamp(8px, 3vw, 16px)",
+        marginBottom: "clamp(12px, 3vw, 24px)",
+        flexWrap: "wrap",
       }}
     >
       <h2
         style={{
           color: "#fff",
           fontFamily: "'DM Serif Display', Georgia, serif",
-          fontSize: "22px",
+          fontSize: "clamp(18px, 5vw, 22px)",
           fontWeight: 400,
           margin: 0,
           letterSpacing: "-0.02em",
+          whiteSpace: "nowrap",
         }}
       >
         {title}
@@ -107,6 +136,7 @@ function SectionTitle({ title }) {
         style={{
           flex: 1,
           height: "1px",
+          minWidth: "50px",
           background:
             "linear-gradient(90deg, rgba(255,255,255,0.15), transparent)",
         }}
@@ -161,52 +191,66 @@ export default function BlogsPage() {
       />
 
       {/* Hero */}
-      <section style={{ paddingTop: "96px" }}>
+      <section style={{ paddingTop: "clamp(60px, 8vw, 96px)" }}>
         <div
-          style={{ margin: "0 auto", maxWidth: "1200px", padding: "0 24px" }}
+          style={{
+            margin: "0 auto",
+            maxWidth: "1200px",
+            padding: "0 clamp(12px, 4vw, 24px)",
+          }}
         >
           <div
             style={{
-              borderRadius: "24px",
+              borderRadius: "clamp(12px, 4vw, 24px)",
               overflow: "hidden",
               background:
                 "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
               border: "1px solid rgba(255,255,255,0.08)",
               display: "flex",
+              flexDirection: window.innerWidth < 768 ? "column" : "row",
               alignItems: "center",
-              minHeight: "220px",
+              justifyContent: "space-between",
+              minHeight: window.innerWidth < 768 ? "auto" : "220px",
               position: "relative",
+              gap: window.innerWidth < 768 ? "20px" : "0",
             }}
           >
             <div
               style={{
                 position: "absolute",
-                right: "10%",
+                right: window.innerWidth < 768 ? "unset" : "10%",
+                left: window.innerWidth < 768 ? "-20%" : "unset",
                 top: "50%",
                 transform: "translateY(-50%)",
-                width: 180,
-                height: 180,
+                width: window.innerWidth < 768 ? "120px" : "180px",
+                height: window.innerWidth < 768 ? "120px" : "180px",
                 borderRadius: "50%",
                 background:
                   "radial-gradient(circle, rgba(102,126,234,0.2) 0%, transparent 70%)",
+                opacity: window.innerWidth < 768 ? 0.5 : 1,
               }}
             />
             <div
-              style={{ padding: "48px 56px", position: "relative", zIndex: 1 }}
+              style={{
+                padding: `clamp(20px, 5vw, 48px) clamp(16px, 4vw, 56px)`,
+                position: "relative",
+                zIndex: 1,
+                flex: 1,
+              }}
             >
               <div
                 style={{
                   display: "inline-block",
-                  padding: "6px 16px",
+                  padding: "clamp(4px 10px, 2vw, 6px 16px)",
                   borderRadius: "8px",
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  fontSize: "11px",
+                  fontSize: "clamp(9px, 2vw, 11px)",
                   fontWeight: 600,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   color: "rgba(255,255,255,0.6)",
-                  marginBottom: "16px",
+                  marginBottom: "clamp(8px, 2vw, 16px)",
                 }}
               >
                 Knowledge Hub
@@ -214,7 +258,7 @@ export default function BlogsPage() {
               <h1
                 style={{
                   fontFamily: "'DM Serif Display', Georgia, serif",
-                  fontSize: "clamp(28px, 4vw, 48px)",
+                  fontSize: "clamp(24px, 6vw, 48px)",
                   fontWeight: 400,
                   margin: 0,
                   letterSpacing: "-0.03em",
@@ -227,8 +271,8 @@ export default function BlogsPage() {
               <p
                 style={{
                   color: "rgba(255,255,255,0.45)",
-                  fontSize: "14px",
-                  marginTop: "12px",
+                  fontSize: "clamp(12px, 3vw, 14px)",
+                  marginTop: "clamp(8px, 2vw, 12px)",
                   maxWidth: "400px",
                   lineHeight: 1.6,
                 }}
@@ -239,15 +283,15 @@ export default function BlogsPage() {
             </div>
             <div
               style={{
-                marginLeft: "auto",
-                padding: "48px 56px",
+                padding: `clamp(20px, 5vw, 48px) clamp(16px, 4vw, 56px)`,
                 position: "relative",
                 zIndex: 1,
+                width: window.innerWidth < 768 ? "100%" : "auto",
               }}
             >
               <button
                 onClick={() => navigate("/write-blog")}
-                className="relative overflow-hidden px-6 py-3 rounded-[15px] bg-[#e8e8e8] text-[#212121] font-extrabold text-[15px] shadow-[4px_8px_19px_-3px_rgba(0,0,0,0.27)] transition-all duration-300 group flex items-center gap-2"
+                className="relative overflow-hidden px-clamp(4, 1.5vw, 6) py-2 rounded-[15px] bg-[#e8e8e8] text-[#212121] font-extrabold text-clamp(13px, 2vw, 15px) shadow-[4px_8px_19px_-3px_rgba(0,0,0,0.27)] transition-all duration-300 group flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <span className="absolute inset-0 w-0 bg-[#212121] rounded-[15px] transition-all duration-300 group-hover:w-full z-0" />
                 <span className="relative z-10 flex items-center gap-2 group-hover:text-[#e8e8e8] transition-colors duration-300">
@@ -276,11 +320,15 @@ export default function BlogsPage() {
 
       {/* Filter */}
       <section
-        style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 24px 0" }}
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "clamp(24px, 5vw, 40px) clamp(12px, 4vw, 24px) 0",
+        }}
       >
         <div
           style={{
-            padding: "20px 24px",
+            padding: "clamp(12px, 3vw, 20px) clamp(12px, 3vw, 24px)",
             borderRadius: "16px",
             background: "rgba(255,255,255,0.02)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -310,15 +358,20 @@ export default function BlogsPage() {
       {/* Category filtered view */}
       {!loading && activeCategory !== "All" && (
         <section
-          style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 24px" }}
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "clamp(24px, 5vw, 40px) clamp(12px, 4vw, 24px)",
+          }}
         >
           <SectionTitle title={activeCategory} />
           {filteredBlogs.length > 0 ? (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "20px",
+                gridTemplateColumns:
+                  "repeat(auto-fill, minmax(clamp(250px, 80vw, 320px), 1fr))",
+                gap: "clamp(12px, 3vw, 20px)",
               }}
             >
               {filteredBlogs.map((blog) => (
@@ -329,7 +382,7 @@ export default function BlogsPage() {
             <div
               style={{
                 textAlign: "center",
-                padding: "80px 0",
+                padding: "clamp(40px, 10vw, 80px) 0",
                 color: "rgba(255,255,255,0.3)",
                 fontSize: "15px",
               }}
@@ -343,16 +396,20 @@ export default function BlogsPage() {
       {/* All sections */}
       {!loading && activeCategory === "All" && (
         <div
-          style={{ maxWidth: "1200px", margin: "0 auto", padding: "40px 24px" }}
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "clamp(24px, 5vw, 40px) clamp(12px, 4vw, 24px)",
+          }}
         >
           {recentBlogs.length > 0 && (
-            <section style={{ marginBottom: "56px" }}>
+            <section style={{ marginBottom: "clamp(30px, 8vw, 56px)" }}>
               <SectionTitle title="Recent Blogs" />
               <BlogSlider blogs={recentBlogs} onCardClick={handleCardClick} />
             </section>
           )}
           {popularBlogs.length > 0 && (
-            <section style={{ marginBottom: "56px" }}>
+            <section style={{ marginBottom: "clamp(30px, 8vw, 56px)" }}>
               <SectionTitle title="Most Popular" />
               <BlogSlider blogs={popularBlogs} onCardClick={handleCardClick} />
             </section>
@@ -361,7 +418,10 @@ export default function BlogsPage() {
             const catBlogs = blogs.filter((b) => b.category === cat);
             if (catBlogs.length === 0) return null;
             return (
-              <section key={cat} style={{ marginBottom: "56px" }}>
+              <section
+                key={cat}
+                style={{ marginBottom: "clamp(30px, 8vw, 56px)" }}
+              >
                 <SectionTitle title={cat} />
                 <BlogSlider blogs={catBlogs} onCardClick={handleCardClick} />
               </section>
@@ -371,7 +431,7 @@ export default function BlogsPage() {
             <div
               style={{
                 textAlign: "center",
-                padding: "80px 0",
+                padding: "clamp(40px, 10vw, 80px) 0",
                 color: "rgba(255,255,255,0.3)",
                 fontSize: "15px",
               }}

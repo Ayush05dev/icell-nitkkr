@@ -118,14 +118,17 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-[#111111] border-r z-40 transition-all duration-300 overflow-hidden flex flex-col max-md:translate-x-0 ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-[#111111] border-r z-40 transition-all duration-300 overflow-hidden flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } md:static md:translate-x-0`}
         style={{ borderColor: "#1f1f1f" }}
       >
         {/* Header */}
-        <div className="p-6 border-b" style={{ borderColor: "#1f1f1f" }}>
-          <h2 className="text-xl font-bold text-white">iCell Admin</h2>
+        <div
+          className="pt-16 md:pt-0 p-6 border-b"
+          style={{ borderColor: "#1f1f1f" }}
+        >
+          <h2 className="text-xl font-bold text-white">ICell Admin</h2>
           <p className="text-[#555] text-xs mt-1">Management System</p>
         </div>
 

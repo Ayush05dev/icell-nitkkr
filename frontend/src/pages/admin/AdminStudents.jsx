@@ -294,23 +294,26 @@ export default function AdminStudents() {
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 overflow-auto">
-        <div className="p-8 min-h-screen" style={{ background: "#0d0d0d" }}>
+        <div
+          className="p-4 sm:p-6 md:p-8 min-h-screen max-md:pt-20"
+          style={{ background: "#0d0d0d" }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
             <div>
               <h1
-                className="text-3xl font-bold text-white"
+                className="text-2xl sm:text-3xl font-bold text-white"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 Student Management
               </h1>
-              <p className="text-[#555] text-sm mt-1">
+              <p className="text-[#555] text-xs sm:text-sm mt-1">
                 Manage all students, branches, and roles
               </p>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-all"
+              className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-all text-sm sm:text-base whitespace-nowrap"
             >
               <Plus size={20} />
               Add Student
@@ -318,19 +321,19 @@ export default function AdminStudents() {
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {/* Search */}
-            <div className="md:col-span-2 relative">
+            <div className="sm:col-span-2 relative">
               <Search
                 size={18}
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#555]"
               />
               <input
                 type="text"
-                placeholder="Search by name, email, or roll number..."
+                placeholder="Search name, email, or roll..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white placeholder-[#555] focus:outline-none focus:border-purple-500"
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white placeholder-[#555] focus:outline-none focus:border-purple-500 text-sm"
               />
             </div>
 
@@ -338,7 +341,7 @@ export default function AdminStudents() {
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500"
+              className="px-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500 text-sm"
             >
               <option value="">All Branches</option>
               {BRANCHES.map((b) => (
@@ -352,7 +355,7 @@ export default function AdminStudents() {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500"
+              className="px-4 py-2 rounded-lg bg-[#111111] border border-[#1f1f1f] text-white focus:outline-none focus:border-purple-500 text-sm"
             >
               <option value="">All Years</option>
               {YEARS.map((y) => (
@@ -365,35 +368,35 @@ export default function AdminStudents() {
 
           {/* Students Table */}
           <div
-            className="rounded-xl border overflow-hidden"
+            className="rounded-lg sm:rounded-xl border overflow-hidden"
             style={{ background: "#111111", borderColor: "#1f1f1f" }}
           >
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid #1f1f1f" }}>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Name
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Email
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Branch
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Year
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Roll Number
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
+                      Roll #
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
-                      Attendance
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
+                      Attend.
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Role
                     </th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-white">
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
@@ -409,34 +412,34 @@ export default function AdminStudents() {
                       <tr
                         key={student._id}
                         style={{ borderBottom: "1px solid #1f1f1f" }}
-                        className="hover:bg-[#0d0d0d] transition"
+                        className="hover:bg-[#0d0d0d] transition text-sm"
                       >
-                        <td className="px-6 py-4 text-sm text-white font-medium">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-white font-medium whitespace-nowrap">
                           {student.name}
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#555]">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#555] whitespace-nowrap">
                           {student.email}
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#555]">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#555] whitespace-nowrap">
                           {student.branch || "-"}
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#555]">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#555] whitespace-nowrap">
                           {student.year || "-"}
                         </td>
-                        <td className="px-6 py-4 text-sm text-[#555]">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-[#555] whitespace-nowrap">
                           {student.roll_number || "-"}
                         </td>
-                        <td className="px-6 py-4 text-sm">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
                           {attendanceLoading ? (
                             <span className="text-[#555]">Loading...</span>
                           ) : total === 0 ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#1f1f1f] text-[#666]">
+                            <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-[#1f1f1f] text-[#666]">
                               No data
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
                               <span
-                                className="px-3 py-1 rounded-full text-xs font-medium"
+                                className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap"
                                 style={{
                                   background: colorStyle.badge,
                                   color: colorStyle.badgeText,
@@ -444,46 +447,48 @@ export default function AdminStudents() {
                               >
                                 {percentage}%
                               </span>
-                              <span className="text-[#555] text-xs">
+                              <span className="text-[#555] text-xs hidden sm:inline">
                                 {attendanceData.present}/{total}
                               </span>
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm whitespace-nowrap">
                           {student.role === "post_holder" ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                            <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
                               {student.post_position || "Post Holder"}
                             </span>
                           ) : student.role === "member" ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-pink-500/20 text-pink-400">
+                            <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-pink-500/20 text-pink-400">
                               Member
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                            <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
                               Student
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1 sm:gap-2">
                             <button
                               onClick={() => {
                                 setSelectedStudent(student);
                                 setShowPromoteModal(true);
                               }}
-                              className="px-3 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition text-xs font-medium"
+                              className="px-2 sm:px-3 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition text-xs font-medium"
                               title="Change Role"
                             >
-                              Change Role
+                              <span className="hidden sm:inline">Change</span>
+                              <span className="inline sm:hidden">CH</span>
                             </button>
                             {student.role !== "student" && (
                               <button
                                 onClick={() => handleDemoteStudent(student._id)}
-                                className="px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition text-xs font-medium"
+                                className="px-2 sm:px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition text-xs font-medium"
                                 title="Demote"
                               >
-                                Demote
+                                <span className="hidden sm:inline">Demote</span>
+                                <span className="inline sm:hidden">DM</span>
                               </button>
                             )}
                           </div>

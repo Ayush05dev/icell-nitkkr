@@ -3,12 +3,13 @@ import verifyUser, { requireAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// TODO: Implement newsletter routes with MongoDB
 import {
   getAllNewsletters,
   getNewsletterById,
   createNewsletter,
-  //   deleteNewsletter,
+  editNewsletter,
+  removeNewsletter,
+  downloadNewsletter,
 } from "../controllers/newsletterController.js";
 
 // ── Public endpoints ──────────────────────────────────────────────────────────
@@ -17,6 +18,10 @@ router.get("/:id", getNewsletterById);
 
 // ── Admin only endpoints ──────────────────────────────────────────────────────
 router.post("/", verifyUser, requireAdmin, createNewsletter);
-// router.delete("/:id", verifyUser, requireAdmin, deleteNewsletter);
+router.patch("/:id", verifyUser, requireAdmin, editNewsletter);
+router.delete("/:id", verifyUser, requireAdmin, removeNewsletter);
+
+// ── Download tracking endpoint ────────────────────────────────────────────────
+router.post("/:id/download", downloadNewsletter);
 
 export default router;

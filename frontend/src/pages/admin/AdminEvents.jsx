@@ -43,8 +43,7 @@ export default function AdminEvents() {
   const [editingEventId, setEditingEventId] = useState(null); // Tracks if we are editing
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
-  const getToken = () =>
-    localStorage.getItem("accessToken") || localStorage.getItem("access_token");
+  const getToken = () => localStorage.getItem("accessToken");
 
   // Check auth
   useEffect(() => {
@@ -182,7 +181,7 @@ export default function AdminEvents() {
   return (
     <div className="flex h-screen bg-[#0d0d0d] text-white">
       <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 overflow-auto p-8 max-md:pt-20">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
