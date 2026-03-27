@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Trash2, ExternalLink, Edit2 } from "lucide-react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 
-const API = "http://localhost:5000/api/newsletters";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const API = `${BASE_URL}/api/newsletters`;
 
 export default function AdminNewsletters() {
   const navigate = useNavigate();
