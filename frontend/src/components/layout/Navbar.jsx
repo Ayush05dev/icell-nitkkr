@@ -357,20 +357,7 @@ export default function Navbar() {
                 </button>
               );
             })}
-            <div className="border-t border-white/10 my-2"></div>
-            {socials.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={index}
-                  href={item.link}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/60 hover:text-white hover:bg-white/5 text-sm font-medium transition"
-                >
-                  <Icon size={18} />
-                  {item.icon.name}
-                </a>
-              );
-            })}
+            
           </nav>
         </div>
       )}
