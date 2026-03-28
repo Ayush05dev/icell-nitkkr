@@ -21,11 +21,33 @@ import RegisterNew from "./pages/auth/register_new";
 import ProfilePage from "./pages/ProfilePage";
 import MemberProfile from "./pages/Profile/MemberProfile";
 import StudentProfile from "./pages/Profile/StudentProfile";
-import TeamPage from "./pages/TeamPage";
+import TeamSection from "./components/layout/TeamSection";
 import { AuthProvider } from "./context/AuthContext";
 import AdminProfile from "./pages/admin/AdminProfile";
+import NewsletterSection from "./components/layout/NewsletterSection";
+import DeveloperPage from "./pages/DeveloperPage";
+
+import Loader from "./components/Loader";
+import { useEffect, useState } from "react";
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const loadApp = async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 4500));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadApp();
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -101,6 +123,20 @@ export default function App() {
             }
           />
 
+          {/* Newsletter Page */}
+          <Route
+            path="/newsletter"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <NewsletterPage />
+              </div>
+            }
+          />
+
           {/* Team Page */}
           <Route
             path="/team"
@@ -110,7 +146,21 @@ export default function App() {
                   <Navbar />
                 </div>
 
-                <TeamPage />
+                <TeamSection />
+              </div>
+            }
+          />
+
+          {/* Developer Page */}
+          <Route
+            path="/developer"
+            element={
+              <div className="min-h-screen flex flex-col bg-[#0d0d0d] text-white">
+                <div className="fixed top-6 w-full z-50 flex justify-center">
+                  <Navbar />
+                </div>
+
+                <DeveloperPage />
               </div>
             }
           />

@@ -20,29 +20,61 @@ import { useAuth } from "../context/AuthContext";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
+// Helper function to determine if event is past or upcoming
+function isEventPast(eventDate) {
+  const eventDateObj = new Date(eventDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  eventDateObj.setHours(0, 0, 0, 0);
+  return eventDateObj < today;
+}
+
 function normaliseEvent(e) {
+  // Properly map backend fields to frontend fields
+  const title = e.name || e.title || "Unnamed Event";
+  const category = e.category || "Event";
+  const isFinanceEvent = category.toLowerCase().includes("finance");
+  const eventDate = new Date(e.date);
+  const isPast = isEventPast(eventDate);
+
+  // Format date as "DD Mon YYYY"
+  const dateStr = eventDate.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
   return {
-    id: e.id,
-    tag: e.tag ?? "Event",
+    id: e._id || e.id,
+    tag: category ?? "Event",
     tagColor: e.tag_color ?? "yellow",
-    title: e.title,
+    title: title,
     subtitle: e.subtitle ?? "",
     description: e.description ?? "",
     longDescription: e.long_description ?? "",
-    icon: e.tag?.toLowerCase().includes("finance") ? Trophy : Lightbulb,
+    icon: isFinanceEvent ? Trophy : Lightbulb,
     accentColor: e.accent_color ?? "yellow",
     highlights: [
+      { label: "Date", value: dateStr },
       { label: "Format", value: e.format ?? "—" },
       { label: "Rounds", value: e.rounds ?? "—" },
       { label: "Prize Pool", value: e.prize_pool ?? "—" },
-      { label: "Duration", value: e.duration ?? "—" },
     ],
     tags: Array.isArray(e.tags) ? e.tags : [],
     image:
-      e.image_url ??
+      e.image ||
+      e.image_url ||
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=700&q=80",
     status: e.status ?? "Upcoming",
-    venue: e.venue ?? "",
+    venue: e.location || e.venue || "",
+    date: eventDate,
+    dateStr: dateStr,
+    time: e.time || "",
+    format: e.format || "—",
+    rounds: e.rounds || "—",
+    prizePool: e.prize_pool || "—",
+    registrationLink: e.registration_link || "",
+    isPast: isPast,
   };
 }
 
@@ -115,7 +147,7 @@ function EventModal({ event, onClose, certInfo }) {
             alt={event.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
           <button
             onClick={onClose}
             className="absolute top-3 sm:top-4 right-3 sm:right-4 p-2 rounded-full bg-black/60 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
@@ -125,12 +157,12 @@ function EventModal({ event, onClose, certInfo }) {
           <span
             className={`absolute top-3 sm:top-4 left-3 sm:left-4 px-3 py-1 rounded-full text-xs font-semibold
             ${
-              event.status === "Registration Open"
-                ? "bg-green-500/20 border border-green-500/40 text-green-400"
+              event.isPast
+                ? "bg-gray-500/20 border border-gray-500/40 text-gray-400"
                 : "bg-yellow-500/20 border border-yellow-500/40 text-yellow-400"
             }`}
           >
-            {event.status}
+            {event.isPast ? "Past Event" : "Upcoming Event"}
           </span>
         </div>
 
@@ -152,46 +184,50 @@ function EventModal({ event, onClose, certInfo }) {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
             {event.title}
           </h2>
-          <p
-            className={`text-base sm:text-lg mb-4 sm:mb-6 ${
-              isYellow ? "text-yellow-400/80" : "text-purple-400/80"
-            }`}
-          >
-            {event.subtitle}
-          </p>
           <p className="text-white/70 leading-relaxed mb-3 sm:mb-4 text-sm sm:text-base">
             {event.description}
           </p>
-          <p className="text-white/50 leading-relaxed text-xs sm:text-sm">
+          <p className="text-white/50 leading-relaxed text-xs sm:text-sm mb-6">
             {event.longDescription}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8">
-            {event.highlights.map((h) => (
-              <div
-                key={h.label}
-                className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10"
-              >
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
-                  {h.label}
-                </p>
-                <p className="text-white font-semibold text-sm sm:text-base">
-                  {h.value}
-                </p>
-              </div>
-            ))}
-          </div>
+          {/* Details Grid - 4 boxes */}
+          {!event.isPast && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8 mb-6">
+              {event.highlights.map((h) => (
+                <div
+                  key={h.label}
+                  className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10"
+                >
+                  <p className="text-white/40 text-xs uppercase tracking-wider mb-1">
+                    {h.label}
+                  </p>
+                  <p className="text-white font-semibold text-sm sm:text-base">
+                    {h.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
-          <div className="flex flex-wrap gap-2 mt-4 sm:mt-6">
-            {event.tags.map((t) => (
-              <span
-                key={t}
-                className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
+          {/* Registration Link Button */}
+          {!event.isPast && event.registrationLink && (
+            <motion.a
+              href={event.registrationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className={`block w-full py-2.5 sm:py-3.5 rounded-full font-semibold text-center text-sm transition-all duration-300 mb-4
+                ${
+                  isYellow
+                    ? "bg-yellow-400 text-zinc-950 hover:bg-yellow-500"
+                    : "bg-purple-500 text-white hover:bg-purple-600"
+                }`}
+            >
+              Register Now
+            </motion.a>
+          )}
 
           {/* ── Certificate section ── */}
           {certInfo?.isParticipant && (
@@ -242,21 +278,55 @@ function EventModal({ event, onClose, certInfo }) {
               )}
             </div>
           )}
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            className={`mt-4 sm:mt-6 w-full py-2.5 sm:py-3.5 rounded-full font-semibold text-sm transition-all duration-300
-              ${
-                isYellow
-                  ? "bg-yellow-400 text-zinc-950 hover:bg-yellow-500"
-                  : "bg-purple-500 text-white hover:bg-purple-600"
-              }`}
-          >
-            Register Now
-          </motion.button>
         </div>
       </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── Past Event Card ──────────────────────────────────────────────────────────
+function PastEventCard({ event, index, onOpen }) {
+  return (
+    <motion.div
+      variants={fadeUp}
+      custom={index * 0.1}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="group relative flex flex-col rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-white/3 backdrop-blur-sm cursor-pointer"
+      onClick={() => onOpen(event)}
+    >
+      <div className="relative h-40 sm:h-52 overflow-hidden">
+        <img
+          src={event.image}
+          alt={event.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
+        <span className="absolute top-3 sm:top-4 left-3 sm:left-4 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-gray-500/20 border border-gray-500/40 text-gray-400">
+          Past Event
+        </span>
+      </div>
+
+      <div className="flex flex-col flex-1 p-4 sm:p-7">
+        <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3">
+          {event.title}
+        </h3>
+        <p className="text-white/60 text-xs sm:text-sm leading-relaxed flex-1">
+          {event.description}
+        </p>
+
+        <div className="mt-4 sm:mt-6 flex items-center justify-between gap-2">
+          <motion.div
+            className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-white/40"
+            whileHover={{ x: 4 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            View Details <ArrowRight size={14} className="sm:w-[15px]" />
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none shadow-[inset_0_0_60px_rgba(255,255,255,0.02)]" />
     </motion.div>
   );
 }
@@ -307,17 +377,6 @@ function EventCard({ event, index, onOpen, certInfo }) {
       </div>
 
       <div className="flex flex-col flex-1 p-4 sm:p-7">
-        <span
-          className={`inline-flex items-center gap-1.5 self-start px-2 sm:px-3 py-1 rounded-full text-xs font-medium border mb-3 sm:mb-4
-          ${
-            isYellow
-              ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
-              : "bg-purple-500/10 border-purple-500/20 text-purple-400"
-          }`}
-        >
-          <Icon size={12} />
-          {event.tag}
-        </span>
         <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
           {event.title}
         </h3>
@@ -471,27 +530,65 @@ const stats = [
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(null);
   // { [eventId]: { isParticipant, hasCertificate, participantName } }
   const [certInfoMap, setCertInfoMap] = useState({});
   const { user } = useAuth();
 
-  // Load events
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const response = await api.get("/events");
-        setEvents(
-          Array.isArray(response.data) ? response.data.map(normaliseEvent) : []
-        );
-      } catch (err) {
-        console.error("Failed to load events:", err);
-      } finally {
-        setLoading(false);
+  // Load events with error handling
+  const loadEvents = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    };
-    loadEvents();
+      setError(null);
+
+      const response = await api.get("/events");
+      const rawEvents = Array.isArray(response.data) ? response.data : [];
+
+      // Filter and normalize events
+      const normalizedEvents = rawEvents.map(normaliseEvent);
+      setEvents(normalizedEvents);
+      setLastFetchTime(new Date());
+
+      console.log(`✅ Loaded ${normalizedEvents.length} events`);
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.error || err.message || "Failed to load events";
+      console.error("❌ Failed to load events:", errorMsg);
+      setError(errorMsg);
+      // Keep showing old events even if fetch fails
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Initial load on mount
+  useEffect(() => {
+    loadEvents(false);
   }, []);
+
+  // Polling mechanism - check for updates every 30 seconds
+  useEffect(() => {
+    const pollingInterval = setInterval(() => {
+      loadEvents(true);
+    }, 30000); // 30 seconds
+
+    return () => {
+      clearInterval(pollingInterval);
+    };
+  }, []);
+
+  // Manual refresh handler
+  const handleManualRefresh = async () => {
+    await loadEvents(true);
+  };
 
   // For each event, silently check if the logged-in user is a participant
   useEffect(() => {
@@ -625,39 +722,161 @@ export default function EventsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="mb-8 sm:mb-12"
+            className="mb-8 sm:mb-12 flex items-center justify-between gap-4"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
-              Our Events
-            </h2>
-            <p className="text-white/50 mt-2 sm:mt-3 max-w-xl text-sm sm:text-base">
-              Two flagship experiences — each crafted to push you beyond the
-              classroom and into the real world.
-            </p>
+            <div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+                Our Events
+              </h2>
+              <p className="text-white/50 mt-2 sm:mt-3 max-w-xl text-sm sm:text-base">
+                Two flagship experiences — each crafted to push you beyond the
+                classroom and into the real world.
+              </p>
+              {lastFetchTime && (
+                <p className="text-white/30 text-xs sm:text-sm mt-2">
+                  Last updated: {lastFetchTime.toLocaleTimeString()}
+                </p>
+              )}
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleManualRefresh}
+              disabled={refreshing || loading}
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 font-medium text-xs sm:text-sm hover:bg-yellow-500/30 disabled:opacity-50 transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+            >
+              {refreshing ? (
+                <>
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="w-4 h-4"
+                  >
+                    ↻
+                  </motion.span>
+                  <span className="hidden sm:inline">Refreshing…</span>
+                </>
+              ) : (
+                <>
+                  <span>↻</span>
+                  <span className="hidden sm:inline">Refresh</span>
+                </>
+              )}
+            </motion.button>
           </motion.div>
 
-          {loading ? (
-            <div className="flex justify-center py-16 sm:py-20 text-white/40 text-sm sm:text-base">
-              Loading events…
-            </div>
-          ) : (
+          {error && (
             <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-80px" }}
-              className="grid md:grid-cols-2 gap-6 sm:gap-8"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
             >
-              {events.map((event, i) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  index={i}
-                  onOpen={setSelectedEvent}
-                  certInfo={certInfoMap[event.id] ?? null}
-                />
-              ))}
+              <p className="font-medium">⚠️ Error loading events</p>
+              <p className="text-red-400/70 text-xs mt-1">{error}</p>
+              <p className="text-red-400/60 text-xs mt-2">
+                Old events are shown below. Trying again in 30 seconds…
+              </p>
             </motion.div>
+          )}
+
+          {loading && events.length === 0 ? (
+            <div className="flex justify-center py-16 sm:py-20 text-white/40 text-sm sm:text-base">
+              <div className="flex flex-col items-center gap-3">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="text-3xl"
+                >
+                  ↻
+                </motion.div>
+                Loading events…
+              </div>
+            </div>
+          ) : events.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center py-16 sm:py-20 px-6 rounded-2xl bg-white/5 border border-white/10"
+            >
+              <p className="text-white/60 text-base sm:text-lg">
+                No events available yet. Check back soon!
+              </p>
+            </motion.div>
+          ) : (
+            <>
+              {/* Upcoming Events Section */}
+              {events.filter((e) => !e.isPast).length > 0 && (
+                <div className="mb-20">
+                  <motion.h3
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                    Upcoming Events
+                  </motion.h3>
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-80px" }}
+                    className="grid md:grid-cols-2 gap-6 sm:gap-8"
+                  >
+                    {events
+                      .filter((e) => !e.isPast)
+                      .sort((a, b) => a.date - b.date) // Sort ascending: earliest first
+                      .map((event, i) => (
+                        <EventCard
+                          key={event.id}
+                          event={event}
+                          index={i}
+                          onOpen={setSelectedEvent}
+                          certInfo={certInfoMap[event.id] ?? null}
+                        />
+                      ))}
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Past Events Section */}
+              {events.filter((e) => e.isPast).length > 0 && (
+                <div>
+                  <motion.h3
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-2xl sm:text-3xl font-bold text-white/60 mb-6 sm:mb-8"
+                  >
+                    Past Events
+                  </motion.h3>
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-80px" }}
+                    className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+                  >
+                    {events
+                      .filter((e) => e.isPast)
+                      .sort((a, b) => b.date - a.date) // Sort descending: most recent first
+                      .map((event, i) => (
+                        <PastEventCard
+                          key={event.id}
+                          event={event}
+                          index={i}
+                          onOpen={setSelectedEvent}
+                        />
+                      ))}
+                  </motion.div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

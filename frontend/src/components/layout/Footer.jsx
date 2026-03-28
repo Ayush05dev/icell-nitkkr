@@ -1,14 +1,13 @@
-import { Twitter, Github, Instagram, Mail, MapPin } from "lucide-react";
+import { Twitter, Github,Linkedin, Instagram, Mail, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Footer() {
   const links = ["Home", "Post", "Events", "Team"];
 
-  const socials = [
-    { icon: Twitter, link: "#" },
-    { icon: Github, link: "#" },
-    { icon: Instagram, link: "#" },
-    { icon: Mail, link: "#" },
+ const socials = [
+    { icon: Linkedin, link: "https://www.linkedin.com/company/icell-nitkkr/" },
+    { icon: Instagram, link: "https://www.instagram.com/innovationcell_nitkkr" },
+    { icon: Mail, link: "mailto:inno_incub@nitkkr.ac.in" },
   ];
 
   const containerVariants = {
@@ -81,6 +80,7 @@ export default function Footer() {
                   <motion.a
                     key={index}
                     href={item.link}
+                    target="_blank"
                     whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     className="p-3 rounded-full bg-white/5 border border-white/10

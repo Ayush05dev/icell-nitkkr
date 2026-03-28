@@ -19,6 +19,7 @@ const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const INITIAL_FORM_DATA = {
   name: "",
   description: "",
+  longDescription: "",
   date: "",
   time: "",
   location: "",
@@ -26,6 +27,10 @@ const INITIAL_FORM_DATA = {
   category: "",
   capacity: "",
   status: "upcoming",
+  format: "", // e.g., "Online", "Offline", "Hybrid"
+  rounds: "",
+  prizePool: "",
+  registrationLink: "",
 };
 
 export default function AdminEvents() {
@@ -88,7 +93,7 @@ export default function AdminEvents() {
     setFormData({
       name: event.name || "",
       description: event.description || "",
-      // Format the date string so the HTML date input can read it (YYYY-MM-DD)
+      longDescription: event.long_description || "",
       date: event.date ? new Date(event.date).toISOString().split("T")[0] : "",
       time: event.time || "",
       location: event.location || "",
@@ -96,6 +101,10 @@ export default function AdminEvents() {
       category: event.category || "",
       capacity: event.capacity || "",
       status: event.status || "upcoming",
+      format: event.format || "",
+      rounds: event.rounds || "",
+      prizePool: event.prize_pool || "",
+      registrationLink: event.registration_link || "",
     });
     setEditingEventId(event._id);
     setShowModal(true);
@@ -146,6 +155,15 @@ export default function AdminEvents() {
   };
 
   // Handle Delete
+  // Helper: Determine if event is past or upcoming based on date
+  const getEventDisplayStatus = (eventDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "past" : "upcoming";
+  };
+
   const handleDeleteEvent = async (eventId) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
 
@@ -211,98 +229,98 @@ export default function AdminEvents() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <div
-                key={event._id}
-                className="bg-[#111111] border border-[#1f1f1f] rounded-xl overflow-hidden hover:border-purple-500/50 transition group relative flex flex-col"
-              >
-                {/* Action Buttons (Show on hover) */}
-                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-10">
-                  <button
-                    onClick={() => handleEditClick(event)}
-                    className="p-2 bg-black/60 rounded-lg text-[#aaa] hover:text-blue-500 hover:bg-black transition"
-                    title="Edit Event"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEvent(event._id)}
-                    className="p-2 bg-black/60 rounded-lg text-[#aaa] hover:text-red-500 hover:bg-black transition"
-                    title="Delete Event"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-
-                {/* Image Placeholder */}
-                <div className="h-40 bg-[#1a1a1a] border-b border-[#1f1f1f] flex items-center justify-center overflow-hidden">
-                  {event.image ? (
-                    <img
-                      src={event.image}
-                      alt={
-                        typeof event.name === "string" ? event.name : "Event"
-                      }
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ImageIcon size={40} className="text-[#333]" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold truncate pr-4">
-                      {typeof event.name === "string"
-                        ? event.name
-                        : "Corrupted Event"}
-                    </h3>
+            {events
+              .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort descending: upcoming first
+              .map((event) => (
+                <div
+                  key={event._id}
+                  className="bg-[#111111] border border-[#1f1f1f] rounded-xl overflow-hidden hover:border-purple-500/50 transition group relative flex flex-col"
+                >
+                  {/* Action Buttons (Show on hover) */}
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-10">
+                    <button
+                      onClick={() => handleEditClick(event)}
+                      className="p-2 bg-black/60 rounded-lg text-[#aaa] hover:text-blue-500 hover:bg-black transition"
+                      title="Edit Event"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(event._id)}
+                      className="p-2 bg-black/60 rounded-lg text-[#aaa] hover:text-red-500 hover:bg-black transition"
+                      title="Delete Event"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <span
-                    className={`self-start px-2 py-1 rounded text-xs font-semibold mb-3 capitalize ${
-                      event.status === "upcoming"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : event.status === "ongoing"
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {event.status}
-                  </span>
 
-                  <p className="text-sm text-[#888] mb-4 line-clamp-2">
-                    {event.description || "No description provided."}
-                  </p>
+                  {/* Image Placeholder */}
+                  <div className="h-40 bg-[#1a1a1a] border-b border-[#1f1f1f] flex items-center justify-center overflow-hidden">
+                    {event.image ? (
+                      <img
+                        src={event.image}
+                        alt={
+                          typeof event.name === "string" ? event.name : "Event"
+                        }
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon size={40} className="text-[#333]" />
+                    )}
+                  </div>
 
-                  <div className="mt-auto space-y-2 text-sm text-[#aaa]">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-purple-400" />
-                      <span>
-                        {event.date
-                          ? new Date(event.date).toLocaleDateString()
-                          : "No date"}
-                      </span>
+                  {/* Content */}
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold truncate pr-4">
+                        {typeof event.name === "string"
+                          ? event.name
+                          : "Corrupted Event"}
+                      </h3>
                     </div>
-                    {event.time && (
+                    <span
+                      className={`self-start px-2 py-1 rounded text-xs font-semibold mb-3 capitalize ${
+                        getEventDisplayStatus(event.date) === "past"
+                          ? "bg-gray-500/20 text-gray-400"
+                          : "bg-blue-500/20 text-blue-400"
+                      }`}
+                    >
+                      {getEventDisplayStatus(event.date)}
+                    </span>
+
+                    <p className="text-sm text-[#888] mb-4 line-clamp-2">
+                      {event.description || "No description provided."}
+                    </p>
+
+                    <div className="mt-auto space-y-2 text-sm text-[#aaa]">
                       <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-purple-400" />
-                        <span>{event.time}</span>
+                        <Calendar size={14} className="text-purple-400" />
+                        <span>
+                          {event.date
+                            ? new Date(event.date).toLocaleDateString()
+                            : "No date"}
+                        </span>
                       </div>
-                    )}
-                    {event.location && (
+                      {event.time && (
+                        <div className="flex items-center gap-2">
+                          <Clock size={14} className="text-purple-400" />
+                          <span>{event.time}</span>
+                        </div>
+                      )}
+                      {event.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPin size={14} className="text-purple-400" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-purple-400" />
-                        <span className="truncate">{event.location}</span>
+                        <Users size={14} className="text-purple-400" />
+                        <span>Capacity: {event.capacity || "Unlimited"}</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Users size={14} className="text-purple-400" />
-                      <span>Capacity: {event.capacity || "Unlimited"}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
 
@@ -462,6 +480,94 @@ export default function AdminEvents() {
                         setFormData({ ...formData, image: e.target.value })
                       }
                       className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Additional Details Section */}
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-semibold text-white mb-4 mt-6">
+                      Event Details
+                    </h3>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-[#888] mb-1">
+                      Format (e.g., Online, Offline, Hybrid)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Online, Offline, Hybrid"
+                      value={formData.format}
+                      onChange={(e) =>
+                        setFormData({ ...formData, format: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-[#888] mb-1">
+                      Number of Rounds
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 3, 2, Single"
+                      value={formData.rounds}
+                      onChange={(e) =>
+                        setFormData({ ...formData, rounds: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-[#888] mb-1">
+                      Prize Pool
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ₹1,00,000"
+                      value={formData.prizePool}
+                      onChange={(e) =>
+                        setFormData({ ...formData, prizePool: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-[#888] mb-1">
+                      Registration Link (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://forms.google.com/..."
+                      value={formData.registrationLink}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          registrationLink: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-[#888] mb-1">
+                      Detailed Description (for modal view)
+                    </label>
+                    <textarea
+                      rows="4"
+                      placeholder="Detailed description shown when users click 'Learn More'"
+                      value={formData.longDescription}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          longDescription: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg focus:border-purple-500 focus:outline-none resize-none"
                     />
                   </div>
                 </div>

@@ -12,7 +12,10 @@ import {
   User,
   LayoutDashboard,
   Menu,
+  Linkedin,
   X,
+  Newspaper,
+  Code,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -48,14 +51,17 @@ export default function Navbar() {
     { name: "Home", icon: Home, path: "/" },
     { name: "Blogs", icon: FileText, path: "/blogs" },
     { name: "Events", icon: CalendarDays, path: "/events" },
+    { name: "Newsletter", icon: Newspaper, path: "/newsletter" },
     { name: "Team", icon: Users, path: "/team" },
+    { name: "Developers", icon: Code, path: "/developer" },
   ];
 
+ 
+
   const socials = [
-    { icon: Twitter, link: "#" },
-    { icon: Github, link: "#" },
-    { icon: Instagram, link: "#" },
-    { icon: Mail, link: "#" },
+    { icon: Linkedin, link: "https://www.linkedin.com/company/icell-nitkkr/" },
+    { icon: Instagram, link: "https://www.instagram.com/innovationcell_nitkkr" },
+    { icon: Mail, link: "mailto:inno_incub@nitkkr.ac.in" },
   ];
 
   const isActive = (path) => {
@@ -103,6 +109,7 @@ export default function Navbar() {
                 <a
                   key={index}
                   href={item.link}
+                  target="_blank"
                   className="p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300"
                 >
                   <Icon size={16} />

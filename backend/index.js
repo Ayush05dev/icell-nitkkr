@@ -14,6 +14,7 @@ import teamRoutes from "./routes/teamRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 // import attendanceRoutes from "./routes/attendanceRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
+import galleryGroupRoutes from "./routes/galleryGroupRoutes.js";
 import eventAttendanceRoutes from "./routes/eventAttendanceRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import certificateRoutes from "./routes/certificateRoutes.js";
@@ -71,6 +72,7 @@ async function startServer() {
   // app.use("/api/attendance", attendanceRoutes);
   app.use("/api/event-attendance", eventAttendanceRoutes);
   app.use("/api/gallery", galleryRoutes);
+  app.use("/api/gallery-groups", galleryGroupRoutes);
   app.use("/api/newsletters", newsletterRoutes);
   app.use("/api/certificate", certificateRoutes);
   app.use("/api/admin", adminRoutes);

@@ -137,7 +137,7 @@ export default function NewsletterSection() {
             viewport={{ once: true, margin: "-100px" }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
           >
-            {newsletters.map((newsletter) => (
+            {newsletters.slice(0, 3).map((newsletter) => (
               <motion.div
                 key={newsletter._id}
                 variants={cardVariants}
@@ -153,13 +153,13 @@ export default function NewsletterSection() {
                 />
 
                 <div className="relative p-6 sm:p-8">
-                  {/* Newsletter Number/Badge */}
+                  {/* Newsletter Number/Badge
                   <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
                     <span className="w-2 h-2 rounded-full bg-yellow-400" />
                     <span className="text-yellow-400/90 text-xs font-medium">
                       Newsletter
                     </span>
-                  </div>
+                  </div> */}
 
                   {/* Title */}
                   <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 line-clamp-2 group-hover:text-yellow-300 transition-colors">

@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import verifyUser, { requireAdmin } from "../middleware/authMiddleware.js";
 import {
@@ -12,6 +11,8 @@ import {
   getEventAttendance,
   getStudentAttendance,
   getAttendanceStats,
+  checkMyCertificate,
+  getEventCertificate,
 } from "../controllers/eventsController.js";
 
 const router = Router();
@@ -19,7 +20,11 @@ const router = Router();
 // ── Public ────────────────────────────────────────────────────────────────────
 router.get("/", listEvents);
 router.get("/upcoming", getUpcomingEvents);
-router.get("/:id", getEvent);
+
+// ── Student – Certificate & Participation ──────────────────────────────────────
+router.get("/:id/check-my-certificate", verifyUser, checkMyCertificate);
+router.get("/:id/my-certificate", verifyUser, getEventCertificate);
+router.get("/:id", getEvent); // Must come after specific routes
 
 // ── Admin – Events CRUD ───────────────────────────────────────────────────────
 router.post("/", verifyUser, requireAdmin, createEvent);
@@ -28,7 +33,12 @@ router.delete("/:id", verifyUser, requireAdmin, deleteEvent);
 
 // ── Admin – Attendance ────────────────────────────────────────────────────────
 router.post("/:eventId/attendance", verifyUser, requireAdmin, markAttendance);
-router.get("/:eventId/attendance", verifyUser, requireAdmin, getEventAttendance);
+router.get(
+  "/:eventId/attendance",
+  verifyUser,
+  requireAdmin,
+  getEventAttendance
+);
 
 // ── Student – Personal Attendance ─────────────────────────────────────────────
 router.get("/student/attendance", verifyUser, getStudentAttendance);
