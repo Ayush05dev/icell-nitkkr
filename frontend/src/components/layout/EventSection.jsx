@@ -93,16 +93,11 @@ export default function EventSection() {
               variants={itemVariants}
               className="text-white/90 mt-4 sm:mt-6 text-base sm:text-lg leading-relaxed"
             >
-                Welcome to the Innovation Cell, the epicenter of creativity and entrepreneurship at National Institute of Technology,Kurukshetra.
-                Established under the aegis of the Ministry of Education, our society is dedicated to fostering a culture of innovation, entrepreneurship, and financial literacy among students.
-                <br />
-                Our mission is to inspire and support students who are interested in finance, startups, innovation, and entrepreneurship.
-                We believe in nurturing the next generation of thinkers, innovators, and leaders who will shape the future.
-                Through a variety of events, workshops, and mentorship programs, we aim to provide our members with the tools and resources they need to turn their ideas into reality.
-                <br />
-                Join us to explore new ideas, meet like-minded individuals, and take your first steps toward building a successful business. Whether you're interested in finance,
-                technology, product development, or social entrepreneurship, there's a place for you at the Innovation Cell.
-                Together, let's innovate, create, and make a difference.
+               Welcome to the Innovation Cell at NIT Kurukshetra — a hub for creativity, entrepreneurship, and innovation.
+
+We strive to inspire and empower students passionate about startups, finance, and technology by providing opportunities through events, workshops, and mentorship programs. Our goal is to create an environment where ideas are nurtured, skills are developed, and innovation thrives.
+
+Join us to explore new ideas, connect with like-minded individuals, and take your first steps toward building impactful solutions that shape the future.
             
             </motion.p>
 
@@ -132,7 +127,7 @@ export default function EventSection() {
             </motion.div>
 
             {/* Call to action button */}
-            <motion.div variants={itemVariants} className="mt-8 sm:mt-10">
+            {/* <motion.div variants={itemVariants} className="mt-8 sm:mt-10">
               <motion.button
                 whileHover={{
                   scale: 1.02,
@@ -157,7 +152,7 @@ export default function EventSection() {
                   transition={{ duration: 0.3 }}
                 />
               </motion.button>
-            </motion.div>
+            </motion.div> */}
           </motion.div>
 
           {/* Right: Four-pic folder / card stack with entrance animation */}

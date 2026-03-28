@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Linkedin, Instagram, Mail } from "lucide-react";
 
 export default function HeroPage() {
+  const navigate = useNavigate();
   const [isGlowing, setIsGlowing] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -11,6 +14,20 @@ export default function HeroPage() {
     { text: "Build. Break. Innovate", emoji: "🚀" },
     { text: "Engineering The Future", emoji: "⚡" },
     { text: "Think Different. Create Bold", emoji: "🎯" },
+  ];
+
+  const socials = [
+    {
+      icon: Linkedin,
+      link: "https://www.linkedin.com/company/icell-nitkkr/",
+      label: "LinkedIn",
+    },
+    {
+      icon: Instagram,
+      link: "https://www.instagram.com/innovationcell_nitkkr",
+      label: "Instagram",
+    },
+    { icon: Mail, link: "mailto:inno_incub@nitkkr.ac.in", label: "Email" },
   ];
 
   // Auto-rotate quotes
@@ -151,7 +168,7 @@ export default function HeroPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
-            className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4"
+            className="flex flex-col sm:flex-row flex-wrap items-center gap-4 sm:gap-6"
           >
             <motion.button
               whileHover={{
@@ -159,17 +176,37 @@ export default function HeroPage() {
                 boxShadow: "0 0 30px rgba(250, 204, 21, 0.4)",
               }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/events")}
               className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-yellow-500/50 transition-all text-sm sm:text-base"
             >
               Explore Events →
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 sm:px-8 py-3 sm:py-4 border-2 border-neutral-600 rounded-lg sm:rounded-xl hover:bg-neutral-800 hover:border-yellow-500 transition-all font-semibold text-sm sm:text-base"
+
+            {/* SOCIAL ICONS */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+              className="flex items-center gap-3"
             >
-              Join Us
-            </motion.button>
+              {socials.map((social, index) => {
+                const Icon = social.icon;
+                return (
+                  <motion.a
+                    key={index}
+                    href={social.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 rounded-full bg-white/10 border border-white/20 text-white/80 hover:text-yellow-400 hover:bg-white/15 hover:border-yellow-400/50 transition-all duration-300"
+                    title={social.label}
+                  >
+                    <Icon size={18} />
+                  </motion.a>
+                );
+              })}
+            </motion.div>
           </motion.div>
 
           {/* Stats */}

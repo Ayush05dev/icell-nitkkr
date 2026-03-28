@@ -145,7 +145,7 @@ function EventModal({ event, onClose, certInfo }) {
           <img
             src={event.image}
             alt={event.title}
-            className="w-full h-full object-cover"
+            // className="w-full h-full object-contain"
           />
           <div className="absolute inset-0 bg-linear-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
           <button

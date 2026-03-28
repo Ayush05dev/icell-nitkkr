@@ -3,16 +3,11 @@ import {
   FileText,
   CalendarDays,
   Users,
-  Twitter,
-  Github,
-  Instagram,
-  Mail,
   LogIn,
   UserPlus,
   User,
   LayoutDashboard,
   Menu,
-  Linkedin,
   X,
   Newspaper,
   Code,
@@ -56,14 +51,6 @@ export default function Navbar() {
     { name: "Developers", icon: Code, path: "/developer" },
   ];
 
- 
-
-  const socials = [
-    { icon: Linkedin, link: "https://www.linkedin.com/company/icell-nitkkr/" },
-    { icon: Instagram, link: "https://www.instagram.com/innovationcell_nitkkr" },
-    { icon: Mail, link: "mailto:inno_incub@nitkkr.ac.in" },
-  ];
-
   const isActive = (path) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
@@ -100,28 +87,11 @@ export default function Navbar() {
               );
             })}
           </div>
-
-          {/* SOCIAL ICONS */}
-          <div className="hidden md:flex items-center gap-3 pl-2 border-l border-white/10">
-            {socials.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={index}
-                  href={item.link}
-                  target="_blank"
-                  className="p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300"
-                >
-                  <Icon size={16} />
-                </a>
-              );
-            })}
-          </div>
         </div>
 
         {/* AUTH BUTTONS */}
-        <div className="flex-1 flex justify-end">
-          <div className="flex items-center gap-2 px-3 md:px-4 py-2">
+        <div className="flex items-center gap-3 md:gap-4 ml-4 md:ml-6">
+          <div className="flex items-center gap-2 px-2 sm:px-3 md:px-4 py-2">
             {user && !loading ? (
               <div className="relative">
                 <button
@@ -227,6 +197,9 @@ export default function Navbar() {
             ) : null}
           </div>
         </div>
+
+        {/* RIGHT SPACER */}
+        <div className="flex-1"></div>
       </div>
 
       {/* MOBILE NAVBAR (hidden on desktop) */}
