@@ -27,7 +27,27 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import NewsletterSection from "./components/layout/NewsletterSection";
 import DeveloperPage from "./pages/DeveloperPage";
 
+import Loader from "./components/Loader";
+import { useEffect, useState } from "react";
+
 export default function App() {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const loadApp = async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 4500));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadApp();
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -112,7 +132,7 @@ export default function App() {
                   <Navbar />
                 </div>
 
-                <NewsletterSection />
+                <NewsletterPage />
               </div>
             }
           />
