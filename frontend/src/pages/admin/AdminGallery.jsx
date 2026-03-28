@@ -73,9 +73,9 @@ export default function AdminGallery() {
         continue;
       }
 
-      // Validate: max 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        setError(`File ${file.name} is too large (max 5MB)`);
+      // Validate: max 15MB
+      if (file.size > 15 * 1024 * 1024) {
+        setError(`File ${file.name} is too large (max 15MB)`);
         continue;
       }
 
@@ -540,7 +540,7 @@ export default function AdminGallery() {
                     Click to select or drag images here
                   </p>
                   <p className="text-[#666] text-sm">
-                    PNG, JPG, GIF up to 5MB each (max 20 images)
+                    PNG, JPG, GIF up to 15MB each (max 20 images)
                   </p>
                   <input
                     ref={fileInputRef}
@@ -655,7 +655,7 @@ export default function AdminGallery() {
                     Click to select or drag images here
                   </p>
                   <p className="text-[#666] text-sm">
-                    PNG, JPG, GIF up to 5MB each
+                    PNG, JPG, GIF up to 15MB each
                   </p>
                   <input
                     ref={fileInputRef}
