@@ -170,14 +170,22 @@ export default function Register() {
             <label className="block text-xs font-medium text-white mb-1.5">
               Branch (Optional)
             </label>
-            <input
+            <select
               name="branch"
-              type="text"
               value={formData.branch}
               onChange={handleChange}
-              className="w-full px-3 py-2.5 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500 transition-colors"
-              placeholder="e.g., CSE, ECE"
-            />
+              className="w-full px-3 py-2.5 bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg text-white placeholder-[#555] text-sm focus:outline-none focus:border-purple-500 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="">Select Branch</option>
+              <option value="CSE">CSE</option>
+              <option value="ECE">ECE</option>
+              <option value="ME">ME</option>
+              <option value="CE">CE</option>
+              <option value="EE">EE</option>
+              <option value="IT">IT</option>
+              <option value="BT">BT</option>
+              <option value="Others">Others</option>
+            </select>
           </div>
 
           {/* Year (Optional) */}

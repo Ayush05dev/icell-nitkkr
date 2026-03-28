@@ -1,12 +1,27 @@
-import { Twitter, Github,Linkedin, Instagram, Mail, MapPin } from "lucide-react";
+import {
+  Twitter,
+  Github,
+  Linkedin,
+  Instagram,
+  Mail,
+  MapPin,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Footer() {
-  const links = ["Home", "Post", "Events", "Team"];
+  const links = [
+    { text: "Home", href: "/" },
+    { text: "Events", href: "/events" },
+    { text: "Newsletter", href: "/newsletter" },
+    { text: "Team", href: "/team" },
+  ];
 
- const socials = [
+  const socials = [
     { icon: Linkedin, link: "https://www.linkedin.com/company/icell-nitkkr/" },
-    { icon: Instagram, link: "https://www.instagram.com/innovationcell_nitkkr" },
+    {
+      icon: Instagram,
+      link: "https://www.instagram.com/innovationcell_nitkkr",
+    },
     { icon: Mail, link: "mailto:inno_incub@nitkkr.ac.in" },
   ];
 
@@ -58,12 +73,12 @@ export default function Footer() {
             <h3 className="text-white font-medium mb-4">Quick Links</h3>
             <ul className="space-y-3">
               {links.map((item) => (
-                <li key={item}>
+                <li key={item.text}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="text-white/60 hover:text-white transition-all duration-300"
                   >
-                    {item}
+                    {item.text}
                   </a>
                 </li>
               ))}
