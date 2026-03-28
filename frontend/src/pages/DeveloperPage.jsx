@@ -3,7 +3,7 @@ import developers from "../data/developer.json";
 
 function DeveloperPage() {
   return (
-    <div className="min-h-screen bg-black text-white px-6 py-12">
+    <div className="min-h-screen bg-black text-white px-6 py-12 mt-12">
       
       {/* 🔥 Heading Section */}
       <div className="text-center mb-12">

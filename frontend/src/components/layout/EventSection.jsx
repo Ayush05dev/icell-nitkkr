@@ -6,10 +6,10 @@ export default function EventSection() {
 
   // Smaller image URLs for faster decode and less layout shift
   const images = [
-    "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&q=80",
-    "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&q=80",
-    "https://images.unsplash.com/photo-1515169067868-5387ec356754?w=400&q=80",
-    "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&q=80",
+  "https://i.ibb.co/m5R8nprY/4.jpg",
+  "https://i.ibb.co/LDJdrRvF/3.jpg",
+  "https://i.ibb.co/zVRxz1Hy/2.jpg",
+  "https://i.ibb.co/6RvKCw27/1.jpg",
   ];
 
   const cardOffsets = [
@@ -78,7 +78,7 @@ export default function EventSection() {
             >
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               <span className="text-yellow-400/90 text-xs font-medium tracking-wider uppercase">
-                Flagship Event
+                About us
               </span>
             </motion.div>
 
@@ -86,17 +86,24 @@ export default function EventSection() {
               variants={itemVariants}
               className="text-4xl sm:text-5xl md:text-6xl font-bold bg-yellow-500 bg-clip-text text-transparent tracking-tight"
             >
-              InnoKshetra
+              WHO ARE WE ?
             </motion.h2>
 
             <motion.p
               variants={itemVariants}
               className="text-white/90 mt-4 sm:mt-6 text-base sm:text-lg leading-relaxed"
             >
-              Our flagship innovation event where minds collide, ideas ignite,
-              and startups are born. Innovation Cell NIT Kurukshetra brings
-              together students, mentors, and industry leaders to turn ideas
-              into impact.
+                Welcome to the Innovation Cell, the epicenter of creativity and entrepreneurship at National Institute of Technology,Kurukshetra.
+                Established under the aegis of the Ministry of Education, our society is dedicated to fostering a culture of innovation, entrepreneurship, and financial literacy among students.
+                <br />
+                Our mission is to inspire and support students who are interested in finance, startups, innovation, and entrepreneurship.
+                We believe in nurturing the next generation of thinkers, innovators, and leaders who will shape the future.
+                Through a variety of events, workshops, and mentorship programs, we aim to provide our members with the tools and resources they need to turn their ideas into reality.
+                <br />
+                Join us to explore new ideas, meet like-minded individuals, and take your first steps toward building a successful business. Whether you're interested in finance,
+                technology, product development, or social entrepreneurship, there's a place for you at the Innovation Cell.
+                Together, let's innovate, create, and make a difference.
+            
             </motion.p>
 
             <motion.p
@@ -208,7 +215,6 @@ export default function EventSection() {
                       width={400}
                       height={300}
                       className="w-full h-full object-cover"
-                      loading="lazy"
                       decoding="async"
                     />
                   </motion.div>

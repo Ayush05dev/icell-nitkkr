@@ -1,120 +1,56 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Loader } from "lucide-react";
+import { motion } from "framer-motion";
+import { Loader } from "lucide-react";
+import GalleryGroup from "../gallery/GalleryGroup";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-const API = `${API_BASE}/api/gallery`;
-const PHOTOS_PER_VIEW = 3;
+const API = `${API_BASE}/api/gallery-groups`;
 
 export default function GallerySection() {
-  const [photos, setPhotos] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Fetch gallery photos
+  // Fetch gallery groups
   useEffect(() => {
-    const fetchPhotos = async () => {
+    const fetchGroups = async () => {
       try {
         setLoading(true);
         setError("");
         const res = await fetch(API);
 
         if (!res.ok) {
-          throw new Error("Failed to fetch gallery photos");
+          throw new Error("Failed to fetch gallery groups");
         }
 
         const data = await res.json();
-        const photosArray = Array.isArray(data) ? data : [];
+        const groupsArray = Array.isArray(data) ? data : [];
 
-        if (photosArray.length === 0) {
-          setError("No photos in gallery yet");
-          setPhotos([]);
+        if (groupsArray.length === 0) {
+          setError("No gallery groups yet");
+          setGroups([]);
         } else {
-          setPhotos(photosArray);
+          // Ensure all groups have sanitized data structures
+          const sanitizedGroups = groupsArray.map((group) => ({
+            ...group,
+            images: Array.isArray(group.images) ? group.images : [],
+            total_images: group.total_images || 0,
+            thumbnail_image: group.thumbnail_image || "",
+            group_name: group.group_name || "Untitled",
+          }));
+          setGroups(sanitizedGroups);
         }
       } catch (err) {
-        console.error("Gallery fetch error:", err);
-        setError("Failed to load gallery photos");
-        setPhotos([]);
+        console.error("Gallery groups fetch error:", err);
+        setError("Failed to load gallery groups");
+        setGroups([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPhotos();
+    fetchGroups();
   }, []);
-
-  // Get visible photos based on current index
-  const visiblePhotos = photos.slice(
-    currentIndex,
-    currentIndex + PHOTOS_PER_VIEW
-  );
-
-  // Check if can navigate
-  const canGoNext = currentIndex + PHOTOS_PER_VIEW < photos.length;
-  const canGoPrev = currentIndex > 0;
-
-  // Handle next button
-  const handleNext = () => {
-    if (canGoNext) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  // Handle previous button
-  const handlePrev = () => {
-    if (canGoPrev) {
-      setCurrentIndex((prev) => Math.max(0, prev - 1));
-    }
-  };
-
-  // Transform Cloudinary URL to optimize for gallery display
-  // Adds responsive sizing based on screen size
-  const getOptimizedImageUrl = (imageUrl, size = "large") => {
-    if (!imageUrl || typeof imageUrl !== "string") {
-      return imageUrl;
-    }
-
-    // Check if URL is from Cloudinary
-    if (!imageUrl.includes("cloudinary.com")) {
-      return imageUrl; // Return as-is if not Cloudinary
-    }
-
-    // Check if already has transformations
-    if (imageUrl.includes("/upload/") && /w_\d+/.test(imageUrl)) {
-      return imageUrl; // Already transformed
-    }
-
-    // Cloudinary transformation parameters
-    // Different sizes for different viewports
-    const transformations = {
-      small: "w_250,h_188,c_fill,q_auto,f_auto", // Mobile
-      medium: "w_380,h_285,c_fill,q_auto,f_auto", // Tablet
-      large: "w_480,h_360,c_fill,q_auto,f_auto", // Desktop
-    };
-
-    const transformation = transformations[size] || transformations.large;
-
-    try {
-      // Insert transformation after /upload/
-      const optimizedUrl = imageUrl.replace(
-        "/upload/",
-        `/upload/${transformation}/`
-      );
-      return optimizedUrl;
-    } catch (err) {
-      console.error("Error transforming image URL:", err);
-      return imageUrl; // Return original if transformation fails
-    }
-  };
-
-  // Open photo in full screen or new tab (with original URL)
-  const handlePhotoClick = (photoUrl) => {
-    if (!photoUrl) return;
-    // Open original full-resolution image
-    window.open(photoUrl, "_blank");
-  };
 
   // Animation variants
   const containerVariants = {
@@ -135,12 +71,6 @@ export default function GallerySection() {
       y: 0,
       transition: { duration: 0.7, ease: "easeOut" },
     },
-  };
-
-  const photoVariants = {
-    enter: { opacity: 0, x: 100 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -100 },
   };
 
   if (loading) {
@@ -168,8 +98,8 @@ export default function GallerySection() {
     );
   }
 
-  if (photos.length === 0) {
-    return null; // Don't show section if no photos
+  if (groups.length === 0) {
+    return null; // Don't show section if no groups
   }
 
   return (
@@ -213,7 +143,7 @@ export default function GallerySection() {
           </motion.p>
         </motion.div>
 
-        {/* Gallery Carousel */}
+        {/* Gallery Groups Grid */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -221,151 +151,32 @@ export default function GallerySection() {
           viewport={{ once: true, margin: "-100px" }}
           className="relative"
         >
-          {/* Photos Grid Container */}
-          <div className="relative overflow-hidden">
-            {/* Carousel Grid - 3 columns on large screens, responsive on mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 justify-items-center">
-              <AnimatePresence mode="popLayout">
-                {visiblePhotos.map((photo, index) => (
-                  <motion.div
-                    key={`${photo._id}-${currentIndex + index}`}
-                    variants={photoVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="group cursor-pointer h-full"
-                  >
-                    <div className="relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-yellow-500/20 to-transparent border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 aspect-video max-w-[480px]">
-                      {/* Photo Image - Optimized with Cloudinary transformations */}
-                      <motion.img
-                        src={getOptimizedImageUrl(photo.imageUrl, "large")}
-                        alt={photo.title}
-                        onClick={() => handlePhotoClick(photo.imageUrl)}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        viewport={{ once: true }}
-                        loading="lazy"
-                      />
-
-                      {/* Overlay - appears on hover */}
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-4 sm:p-5 md:p-6"
-                      >
-                        {/* Photo Title */}
-                        <motion.h3
-                          initial={{ y: 10, opacity: 0 }}
-                          whileHover={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                          className="text-white font-semibold text-sm sm:text-base truncate"
-                        >
-                          {photo.title}
-                        </motion.h3>
-
-                        {/* Photo Event/Category */}
-                        {photo.event && (
-                          <motion.p
-                            initial={{ y: 10, opacity: 0 }}
-                            whileHover={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.3, delay: 0.15 }}
-                            className="text-yellow-400/90 text-xs sm:text-sm mt-1 sm:mt-2"
-                          >
-                            {photo.event}
-                          </motion.p>
-                        )}
-
-                        {/* Click to View */}
-                        <motion.p
-                          initial={{ y: 10, opacity: 0 }}
-                          whileHover={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                          className="text-white/60 text-xs sm:text-sm mt-2 sm:mt-3"
-                        >
-                          Click to view fullscreen
-                        </motion.p>
-                      </motion.div>
-
-                      {/* Corner accent gradient */}
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-yellow-500/20 transition-colors duration-300" />
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+          {/* Groups Grid - Responsive layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {groups.map((group, index) => (
+              <motion.div
+                key={group._id}
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <GalleryGroup group={group} />
+              </motion.div>
+            ))}
           </div>
 
-          {/* Navigation Controls - only show if more photos exist */}
-          {photos.length > 1 && (
-            <motion.div
-              variants={itemVariants}
-              className="flex items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10 md:mt-12"
-            >
-              {/* Photo Counter */}
-              <div className="text-white/60 text-xs sm:text-sm font-medium">
-                {currentIndex + 1} -{" "}
-                {Math.min(currentIndex + PHOTOS_PER_VIEW, photos.length)}
-                <span className="text-white/40"> of {photos.length}</span>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex gap-2 sm:gap-3">
-                {/* Previous Button */}
-                <motion.button
-                  onClick={handlePrev}
-                  disabled={!canGoPrev}
-                  whileHover={canGoPrev ? { scale: 1.1 } : {}}
-                  whileTap={canGoPrev ? { scale: 0.95 } : {}}
-                  className={`p-2 sm:p-3 rounded-full border transition-all duration-300 flex items-center justify-center ${
-                    canGoPrev
-                      ? "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 text-yellow-400 cursor-pointer"
-                      : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
-                  }`}
-                >
-                  <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
-                </motion.button>
-
-                {/* Next Button */}
-                <motion.button
-                  onClick={handleNext}
-                  disabled={!canGoNext}
-                  whileHover={canGoNext ? { scale: 1.1 } : {}}
-                  whileTap={canGoNext ? { scale: 0.95 } : {}}
-                  className={`p-2 sm:p-3 rounded-full border transition-all duration-300 flex items-center justify-center ${
-                    canGoNext
-                      ? "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 text-yellow-400 cursor-pointer"
-                      : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
-                  }`}
-                >
-                  <ChevronRight size={20} className="sm:w-6 sm:h-6" />
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Scroll Progress Indicator */}
-          {photos.length > PHOTOS_PER_VIEW && (
-            <motion.div
-              variants={itemVariants}
-              className="mt-6 sm:mt-8 h-1 bg-white/10 rounded-full overflow-hidden max-w-xs"
-            >
-              <motion.div
-                className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500"
-                initial={{
-                  width: `${
-                    (currentIndex / (photos.length - PHOTOS_PER_VIEW)) * 100
-                  }%`,
-                }}
-                animate={{
-                  width: `${
-                    (currentIndex / (photos.length - PHOTOS_PER_VIEW)) * 100
-                  }%`,
-                }}
-                transition={{ duration: 0.5 }}
-              />
-            </motion.div>
-          )}
+          {/* Info text */}
+          <motion.div
+            variants={itemVariants}
+            className="mt-12 text-center text-white/60 text-sm"
+          >
+            <p>
+              {groups.reduce((sum, g) => sum + g.total_images, 0)} photos across{" "}
+              {groups.length} galleries
+            </p>
+          </motion.div>
         </motion.div>
       </div>
 
