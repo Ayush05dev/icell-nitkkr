@@ -98,7 +98,7 @@ export default function HeroPage() {
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-center px-4 sm:px-6 z-10">
+      <div className="mt-7 relative max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-center px-4 sm:px-6 z-10">
         {/* LEFT SIDE - TEXT */}
         <motion.div
           className="space-y-6 sm:space-y-8"
@@ -114,7 +114,7 @@ export default function HeroPage() {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-yellow-400 text-xs sm:text-sm font-medium"
           >
-            <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+            <span className=" w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
             Student Innovation Hub
           </motion.div>
 
