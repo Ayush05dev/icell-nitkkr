@@ -1,66 +1,82 @@
-import { User, Mail, BookOpen, GraduationCap, BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Linkedin, Instagram, GitBranch, Github } from "lucide-react";
 
-export default function ProfileCard({ profile, user }) {
+export default function ProfileCard({ member }) {
   return (
-    <div
-      className="rounded-lg border p-4"
-      style={{ background: "#111111", borderColor: "#1f1f1f" }}
-    >
-      {/* Avatar & Name */}
-      <div className="flex flex-col items-center text-center mb-4">
-        <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-3">
-          <User size={32} className="text-white" />
-        </div>
-        <h2 className="text-base font-bold">{profile?.name || "User"}</h2>
-        <p className="text-[#555] text-xs">
-          ID: {user?._id?.substring(0, 8) ?? "..."}
-        </p>
-      </div>
+    <div className="w-[280px] group cursor-pointer">
+      <motion.div
+        whileHover={{ y: -12 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="relative h-full"
+      >
+        <div className="relative p-6 rounded-3xl border border-white/10 group-hover:border-yellow-400/30 transition-all duration-500 h-full flex flex-col bg-black">
+          
+          {/* Avatar */}
+          <div className="relative mx-auto w-40 h-40 mb-5 flex-shrink-0">
+            <div className="w-full h-full rounded-full overflow-hidden border-2 border-yellow-400/40">
+              <img
+                src={
+                  member.image ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                    member.name ?? member.id
+                  )}`
+                }
+                alt={member.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
 
-      {/* Quick Info */}
-      <div className="space-y-2 text-xs">
-        {profile?.email && (
-          <div className="flex items-center gap-2">
-            <Mail size={12} className="text-purple-400" />
-            <span className="text-[#999] truncate">{profile.email}</span>
+          {/* Name + Position */}
+          <div className="text-center space-y-2 flex-grow mb-5">
+            <h3 className="text-xl font-bold text-white group-hover:text-yellow-400 transition">
+              {member.name}
+            </h3>
+            <p className="text-yellow-400/80 text-sm uppercase">
+              {member.position}
+            </p>
           </div>
-        )}
-        {profile?.branch && (
-          <div className="flex items-center gap-2">
-            <BookOpen size={12} className="text-blue-400" />
-            <span className="text-[#999]">{profile.branch}</span>
-          </div>
-        )}
-        {profile?.year && (
-          <div className="flex items-center gap-2">
-            <GraduationCap size={12} className="text-green-400" />
-            <span className="text-[#999]">Year {profile.year}</span>
-          </div>
-        )}
-        {profile?.roll_number && (
-          <div className="flex items-center gap-2">
-            <BarChart3 size={12} className="text-orange-400" />
-            <span className="text-[#999]">{profile.roll_number}</span>
-          </div>
-        )}
-      </div>
 
-      {/* Status Badge */}
-      <div className="mt-3 pt-3 border-t" style={{ borderColor: "#1f1f1f" }}>
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          <span className="text-xs text-[#999]">
-            {profile?.is_member ? "Active" : "Inactive"}
-          </span>
+          {/* Social Links */}
+          <div className="flex gap-2 mt-auto">
+            <motion.a
+              href={member.linkedin || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-yellow-400/10 border border-white/10 hover:border-yellow-400/30 text-white/60 hover:text-yellow-400 transition"
+            >
+              <Linkedin size={18} />
+              {/* <span className="text-sm">LinkedIn</span> */}
+            </motion.a>
+
+            <motion.a
+              href={member.instagram || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-white/60 hover:text-pink-400 transition"
+            >
+              <Instagram size={18} />
+              {/* <span className="text-sm">Instagram</span> */}
+            </motion.a>
+{ member.github && 
+            <motion.a
+              href={member.github || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-white/60 hover:text-pink-400 transition"
+            >
+              <Github size={18} />
+              {/* <span className="text-sm">Instagram</span> */}
+            </motion.a>}
+          </div>
         </div>
-        <p className="text-xs text-[#555] mt-1">
-          Joined{" "}
-          {new Date(profile?.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
