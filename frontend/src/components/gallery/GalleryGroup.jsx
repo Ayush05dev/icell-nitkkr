@@ -134,11 +134,12 @@ const GalleryGroup = ({ group, onImageDelete }) => {
             {groupName}
           </h3>
           <button
-            onClick={() => setShowModal(true)}
-            className="mt-3 w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition"
-          >
-            View Gallery ({images.length})
-          </button>
+  onClick={() => setShowModal(true)}
+  className="mt-2 px-4 py-1.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black 
+  rounded-lg text-sm font-medium shadow hover:shadow-yellow-500/30 transition-all"
+>
+  View Gallery ({images.length})
+</button>
         </div>
       </div>
 

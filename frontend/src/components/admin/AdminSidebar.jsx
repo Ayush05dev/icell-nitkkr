@@ -14,6 +14,7 @@ import {
   X,
   ChevronRight,
   Award,
+  Home,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -125,11 +126,23 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }) {
       >
         {/* Header */}
         <div
-          className="pt-16 md:pt-0 p-6 border-b"
+          className="pt-16 md:pt-0 p-6 border-b flex items-center justify-between"
           style={{ borderColor: "#1f1f1f" }}
         >
-          <h2 className="text-xl font-bold text-white">ICell Admin</h2>
-          <p className="text-[#555] text-xs mt-1">Management System</p>
+          <div>
+            <h2 className="text-xl font-bold text-white">ICell Admin</h2>
+            <p className="text-[#555] text-xs mt-1">Management System</p>
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="p-2 rounded-lg hover:bg-yellow-400/20 transition-all duration-200 group"
+            title="Go to Home"
+          >
+            <Home
+              size={20}
+              className="text-yellow-400 group-hover:text-yellow-300 group-hover:scale-110 transition-transform"
+            />
+          </button>
         </div>
 
         {/* Navigation Links */}

@@ -97,32 +97,9 @@ const staggerContainer = {
 };
 
 // ─── Event Modal ───────────────────────────────────────────────────────────────
-function EventModal({ event, onClose, certInfo }) {
+function EventModal({ event, onClose }) {
   const Icon = event.icon;
   const isYellow = event.accentColor === "yellow";
-  const [downloading, setDownloading] = useState(false);
-  const [dlError, setDlError] = useState("");
-
-  async function handleDownload() {
-    setDownloading(true);
-    setDlError("");
-    try {
-      const response = await api.get(`/events/${event.id}/my-certificate`);
-      const { signedUrl, fileName } = response.data;
-      const a = document.createElement("a");
-      a.href = signedUrl;
-      a.download = fileName ?? "certificate.pdf";
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (err) {
-      setDlError(err.response?.data?.error ?? err.message);
-    } finally {
-      setDownloading(false);
-    }
-  }
 
   return (
     <motion.div
@@ -228,56 +205,6 @@ function EventModal({ event, onClose, certInfo }) {
               Register Now
             </motion.a>
           )}
-
-          {/* ── Certificate section ── */}
-          {certInfo?.isParticipant && (
-            <div
-              className="mt-6 sm:mt-8 p-4 sm:p-5 rounded-xl sm:rounded-2xl border"
-              style={{
-                background: certInfo.hasCertificate
-                  ? "rgba(16,185,129,0.06)"
-                  : "rgba(255,255,255,0.03)",
-                borderColor: certInfo.hasCertificate
-                  ? "rgba(16,185,129,0.2)"
-                  : "rgba(255,255,255,0.08)",
-              }}
-            >
-              <p className="text-xs sm:text-sm font-semibold text-white/80 mb-1">
-                🎓 You participated in this event
-                {certInfo.participantName && (
-                  <span className="text-white/40 font-normal">
-                    {" "}
-                    as {certInfo.participantName}
-                  </span>
-                )}
-              </p>
-              {certInfo.hasCertificate ? (
-                <>
-                  <p className="text-xs text-emerald-400/70 mb-3 sm:mb-4">
-                    Your certificate is ready to download.
-                  </p>
-                  {dlError && (
-                    <p className="text-red-400 text-xs mb-2">{dlError}</p>
-                  )}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    className="w-full py-2.5 sm:py-3.5 rounded-full font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-60 transition-all duration-300"
-                  >
-                    <Download size={15} />
-                    {downloading ? "Preparing…" : "Download My Certificate"}
-                  </motion.button>
-                </>
-              ) : (
-                <p className="text-xs text-white/30 mt-1">
-                  Certificate has not been generated yet. Check back after the
-                  event.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </motion.div>
     </motion.div>
@@ -332,11 +259,9 @@ function PastEventCard({ event, index, onOpen }) {
 }
 
 // ─── Event Card ────────────────────────────────────────────────────────────────
-function EventCard({ event, index, onOpen, certInfo }) {
+function EventCard({ event, index, onOpen }) {
   const Icon = event.icon;
   const isYellow = event.accentColor === "yellow";
-  const hasCert = certInfo?.hasCertificate;
-  const isPart = certInfo?.isParticipant;
 
   return (
     <motion.div
@@ -364,16 +289,6 @@ function EventCard({ event, index, onOpen, certInfo }) {
         >
           {event.status}
         </span>
-        {hasCert && (
-          <span className="absolute top-3 sm:top-4 left-3 sm:left-4 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center gap-1">
-            <Download size={10} /> Certificate Ready
-          </span>
-        )}
-        {isPart && !hasCert && (
-          <span className="absolute top-3 sm:top-4 left-3 sm:left-4 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 border border-blue-500/40 text-blue-400">
-            Participated
-          </span>
-        )}
       </div>
 
       <div className="flex flex-col flex-1 p-4 sm:p-7">
@@ -428,11 +343,6 @@ function EventCard({ event, index, onOpen, certInfo }) {
           >
             Learn More <ArrowRight size={14} className="sm:w-[15px]" />
           </motion.div>
-          {hasCert && (
-            <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium whitespace-nowrap">
-              <Download size={12} /> Click to download
-            </span>
-          )}
         </div>
       </div>
 
@@ -523,7 +433,7 @@ const stats = [
   { label: "Events Hosted", value: "12+", icon: CalendarDays },
   { label: "Participants", value: "500+", icon: Users },
   { label: "Total Prize Pool", value: "₹1 Lakh+", icon: Trophy },
-  { label: "Avg. Duration", value: "2 Days", icon: Clock },
+  // { label: "Avg. Duration", value: "2 Days", icon: Clock },
 ];
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
@@ -534,8 +444,6 @@ export default function EventsPage() {
   const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(null);
-  // { [eventId]: { isParticipant, hasCertificate, participantName } }
-  const [certInfoMap, setCertInfoMap] = useState({});
   const { user } = useAuth();
 
   // Load events with error handling
@@ -589,24 +497,6 @@ export default function EventsPage() {
   const handleManualRefresh = async () => {
     await loadEvents(true);
   };
-
-  // For each event, silently check if the logged-in user is a participant
-  useEffect(() => {
-    if (!user || events.length === 0) return;
-
-    events.forEach(async (event) => {
-      try {
-        const response = await api.get(
-          `/events/${event.id}/check-my-certificate`
-        );
-        if (response.status === 200) {
-          setCertInfoMap((prev) => ({ ...prev, [event.id]: response.data }));
-        }
-      } catch {
-        // Not a participant or network error — silently ignore
-      }
-    });
-  }, [events, user]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -689,7 +579,7 @@ export default function EventsPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+            className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-6"
           >
             {stats.map((s, i) => {
               const Icon = s.icon;
@@ -698,7 +588,7 @@ export default function EventsPage() {
                   key={s.label}
                   variants={fadeUp}
                   custom={i * 0.05}
-                  className="flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-2xl bg-white/3 border border-white/10 text-center"
+                  className="flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-2xl bg-white/3 border border-white/10 text-center w-40 sm:w-48"
                 >
                   <span className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-yellow-500/10 border border-yellow-500/15">
                     <Icon size={16} className="sm:w-[18px] text-yellow-400" />
@@ -837,7 +727,6 @@ export default function EventsPage() {
                           event={event}
                           index={i}
                           onOpen={setSelectedEvent}
-                          certInfo={certInfoMap[event.id] ?? null}
                         />
                       ))}
                   </motion.div>
@@ -957,7 +846,6 @@ export default function EventsPage() {
           <EventModal
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
-            certInfo={certInfoMap[selectedEvent.id] ?? null}
           />
         )}
       </AnimatePresence>
