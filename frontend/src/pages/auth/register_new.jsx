@@ -20,7 +20,7 @@ export default function Register() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const branches = ["CSE", "ECE", "ME", "CE", "EE", "IT", "BT", "Others"];
+  const branches = ["CSE","IT","AIDS","AIML","MnC", "ECE", "ME", "Civil", "EE", "PIE","IIOT","SET","Robotics","Others"];
   const years = ["1", "2", "3", "4"];
 
   const handleChange = (e) =>

@@ -179,11 +179,17 @@ export default function Register() {
               <option value="">Select Branch</option>
               <option value="CSE">CSE</option>
               <option value="ECE">ECE</option>
+              <option value="AIDS">AIDS</option>
+              <option value="AIML">AIML</option>
+              <option value="MnC">MnC</option>
               <option value="ME">ME</option>
-              <option value="CE">CE</option>
+              <option value="Civil">Civil</option>
               <option value="EE">EE</option>
               <option value="IT">IT</option>
-              <option value="BT">BT</option>
+              <option value="PIE">PIE</option>
+              <option value="IIOT">IIOT</option>
+              <option value="SET">SET</option>
+              <option value="Robotics">Robotics</option>
               <option value="Others">Others</option>
             </select>
           </div>
