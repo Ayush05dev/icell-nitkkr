@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../services/api";
-
-const AuthContext = createContext();
+import { AuthContext } from "./AuthContextObject";
 
 // Helper function to decode JWT without external libraries
 const decodeJWT = (token) => {
@@ -282,5 +281,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export { AuthContext };
