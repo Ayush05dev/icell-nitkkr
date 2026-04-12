@@ -267,18 +267,41 @@ export async function saveEmailVerificationToken(userId, tokenHash, expiresAt) {
   const db = getDB();
   const profiles = db.collection("profiles");
 
+  const generatedAt = new Date(); // Explicit timestamp of token generation
   const result = await profiles.updateOne(
     { _id: userId },
     {
       $set: {
         verification_token_hash: tokenHash,
         verification_token_expires_at: expiresAt,
+        verification_token_generated_at: generatedAt, // NEW: explicit generation time
         updated_at: new Date(),
       },
     }
   );
 
   return result.modifiedCount > 0;
+}
+
+// Get email verification token info (returns generated timestamp)
+export async function getEmailVerificationTokenInfo(userId) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const user = await profiles.findOne(
+    { _id: userId },
+    {
+      projection: {
+        verification_token_expires_at: 1,
+        verification_token_generated_at: 1, // NEW
+      },
+    }
+  );
+
+  return {
+    expiresAt: user?.verification_token_expires_at || null,
+    generatedAt: user?.verification_token_generated_at || null, // NEW
+  };
 }
 
 export async function verifyEmailByTokenHash(tokenHash) {
@@ -312,12 +335,14 @@ export async function savePasswordResetToken(userId, tokenHash, expiresAt) {
   const db = getDB();
   const profiles = db.collection("profiles");
 
+  const generatedAt = new Date(); // Explicit timestamp of token generation
   const result = await profiles.updateOne(
     { _id: userId },
     {
       $set: {
         password_reset_token_hash: tokenHash,
         password_reset_token_expires_at: expiresAt,
+        password_reset_token_generated_at: generatedAt, // NEW: explicit generation time
         updated_at: new Date(),
       },
     }
@@ -348,11 +373,15 @@ export async function getPasswordResetTokenInfo(userId) {
     {
       projection: {
         password_reset_token_expires_at: 1,
+        password_reset_token_generated_at: 1, // NEW
       },
     }
   );
 
-  return user?.password_reset_token_expires_at || null;
+  return {
+    expiresAt: user?.password_reset_token_expires_at || null,
+    generatedAt: user?.password_reset_token_generated_at || null, // NEW
+  };
 }
 
 // Reset user password and clear reset token

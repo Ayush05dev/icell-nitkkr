@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Lock, User, Phone, BookOpen, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Register() {
   const nitkkrEmailRegex = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
@@ -82,6 +82,7 @@ export default function Register() {
             "Registration successful. Check your inbox for the verification link."
         );
         setSuccess(true);
+        setResendCooldown(30); // Start 30-second cooldown after registration
         // Don't auto-redirect immediately, let user see options
       } else {
         setError(result.error || "Registration failed. Please try again.");
@@ -111,6 +112,7 @@ export default function Register() {
         setResendMessage(
           `${result.message} (Link expires in ${result.expiresIn})`
         );
+        setResendCooldown(30); // Start 30-second cooldown after successful resend
       } else {
         // Check if error includes cooldown wait time
         if (result.error?.includes("Please wait")) {

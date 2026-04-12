@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -103,6 +103,7 @@ export default function Login() {
         setResendMessage(
           `${result.message} (Link expires in ${result.expiresIn})`
         );
+        setResendCooldown(30); // Start 30-second cooldown after successful resend
         setError(""); // Clear error message
       } else {
         // Check if error includes cooldown wait time

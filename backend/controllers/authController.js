@@ -15,8 +15,8 @@ import {
 const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
 const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const EMAIL_SEND_TIMEOUT_MS = Number(
-  process.env.EMAIL_SEND_TIMEOUT_MS || 15000
-);
+  process.env.EMAIL_SEND_TIMEOUT_MS || 30000
+); // Increased from 15s to 30s
 const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between resends
 const PASSWORD_RESET_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PASSWORD_RESET_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between reset requests
@@ -211,15 +211,20 @@ export async function resendVerificationEmail(req, res) {
 
     // Check resend cooldown based on token generation time (30 seconds)
     if (user.verification_token_expires_at) {
-      const tokenExpiry = new Date(user.verification_token_expires_at);
       const now = new Date();
-      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+      let timeSinceGeneration;
 
-      // Calculate time since token was generated
-      // Logic: Token expires in 24h from generation
-      // timeSinceGeneration = total_expiry_time - time_remaining
-      const timeSinceGeneration =
-        EMAIL_VERIFICATION_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      // NEW: Use explicit generation timestamp if available (backward compatible)
+      if (user.verification_token_generated_at) {
+        const generatedAt = new Date(user.verification_token_generated_at);
+        timeSinceGeneration = now.getTime() - generatedAt.getTime();
+      } else {
+        // FALLBACK: Use old calculation for tokens without timestamp field
+        const tokenExpiry = new Date(user.verification_token_expires_at);
+        const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+        timeSinceGeneration =
+          EMAIL_VERIFICATION_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      }
 
       // If token was generated less than 30 seconds ago, prevent resend
       if (timeSinceGeneration < RESEND_COOLDOWN_MS) {
@@ -614,15 +619,21 @@ export async function forgotPassword(req, res) {
     }
 
     // Check reset cooldown based on token generation time (30 seconds)
-    const tokenExpiryTime = await authModel.getPasswordResetTokenInfo(user._id);
-    if (tokenExpiryTime) {
-      const tokenExpiry = new Date(tokenExpiryTime);
+    const tokenInfo = await authModel.getPasswordResetTokenInfo(user._id);
+    if (tokenInfo) {
       const now = new Date();
-      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+      let timeSinceGeneration;
 
-      // Calculate time since token was generated
-      const timeSinceGeneration =
-        PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      // NEW: Use explicit generation timestamp if available (backward compatible)
+      if (tokenInfo.generatedAt) {
+        const generatedAt = new Date(tokenInfo.generatedAt);
+        timeSinceGeneration = now.getTime() - generatedAt.getTime();
+      } else {
+        // FALLBACK: Use old calculation for tokens without timestamp field
+        const tokenExpiry = new Date(tokenInfo.expiresAt);
+        const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+        timeSinceGeneration = PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      }
 
       // If token was generated less than 30 seconds ago, prevent resend
       if (timeSinceGeneration < PASSWORD_RESET_COOLDOWN_MS) {
@@ -810,15 +821,21 @@ export async function resendResetLink(req, res) {
     }
 
     // Check reset cooldown based on token generation time (30 seconds)
-    const tokenExpiryTime = await authModel.getPasswordResetTokenInfo(user._id);
-    if (tokenExpiryTime) {
-      const tokenExpiry = new Date(tokenExpiryTime);
+    const tokenInfo = await authModel.getPasswordResetTokenInfo(user._id);
+    if (tokenInfo) {
       const now = new Date();
-      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+      let timeSinceGeneration;
 
-      // Calculate time since token was generated
-      const timeSinceGeneration =
-        PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      // NEW: Use explicit generation timestamp if available (backward compatible)
+      if (tokenInfo.generatedAt) {
+        const generatedAt = new Date(tokenInfo.generatedAt);
+        timeSinceGeneration = now.getTime() - generatedAt.getTime();
+      } else {
+        // FALLBACK: Use old calculation for tokens without timestamp field
+        const tokenExpiry = new Date(tokenInfo.expiresAt);
+        const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+        timeSinceGeneration = PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+      }
 
       // If token was generated less than 30 seconds ago, prevent resend
       if (timeSinceGeneration < PASSWORD_RESET_COOLDOWN_MS) {
