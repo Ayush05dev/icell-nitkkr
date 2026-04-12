@@ -144,6 +144,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resendVerificationEmail = async (email) => {
+    try {
+      const response = await api.post("/auth/resend-verification-email", {
+        email,
+      });
+
+      return {
+        success: true,
+        message:
+          response.data?.message ||
+          "Verification email sent. Check your inbox.",
+        expiresIn: response.data?.expiresIn || "24 hours",
+      };
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to resend email";
+      return { success: false, error: errorMsg };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -158,7 +180,15 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, getAuthHeader }}
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        resendVerificationEmail,
+        logout,
+        getAuthHeader,
+      }}
     >
       {children}
     </AuthContext.Provider>

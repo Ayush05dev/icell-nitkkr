@@ -38,7 +38,7 @@ export async function createUser(email, password, name, phone, branch, year) {
   };
 
   await profiles.insertOne(user);
-  return { id: userId, email, name };
+  return { _id: userId, id: userId, email, name };
 }
 
 // Get user by email

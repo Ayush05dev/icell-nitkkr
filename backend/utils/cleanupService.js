@@ -54,7 +54,7 @@ export async function performCleanup() {
 
     if (deletedCount > 0) {
       console.log(
-        `[Cleanup Service] Deleted ${deletedCount} unverified student account(s) older than ${UNVERIFIED_EXPIRY_HOURS} hours`
+        `[Cleanup Service] Deleted ${deletedCount} unverified student account(s) older than ${UNVERIFIED_EXPIRY_HOURS} hours (2 days)`
       );
     } else {
       console.log(

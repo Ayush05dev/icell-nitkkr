@@ -10,10 +10,11 @@ import {
 import { sendVerificationEmail } from "../utils/emailService.js";
 
 const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
-const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const EMAIL_SEND_TIMEOUT_MS = Number(
   process.env.EMAIL_SEND_TIMEOUT_MS || 15000
 );
+const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between resends
 
 function withTimeout(promise, timeoutMs) {
   return Promise.race([
@@ -73,7 +74,7 @@ export async function register(req, res) {
     );
 
     await authModel.saveEmailVerificationToken(
-      user.id,
+      user._id,
       verificationTokenHash,
       verificationTokenExpiry
     );
@@ -169,6 +170,100 @@ export async function verifyEmail(req, res) {
   } catch (error) {
     console.error("Verify email error:", error);
     return res.redirect(`${getFrontendUrl()}/login?verified=0`);
+  }
+}
+
+// Resend verification email
+export async function resendVerificationEmail(req, res) {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    if (!NITKKR_EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        error: "Only @nitkkr.ac.in email addresses are allowed",
+      });
+    }
+
+    // Check if user exists
+    const user = await authModel.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        error: "No account found with this email. Please register first.",
+      });
+    }
+
+    // Check if already verified
+    if (user.email_verified) {
+      return res.status(400).json({
+        error: "Email is already verified. You can log in now.",
+      });
+    }
+
+    // Check resend cooldown based on token generation time (30 seconds)
+    if (user.verification_token_expires_at) {
+      const tokenExpiry = new Date(user.verification_token_expires_at);
+      const now = new Date();
+      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+
+      // Calculate time since token was generated
+      // Logic: Token expires in 24h from generation
+      // timeSinceGeneration = total_expiry_time - time_remaining
+      const timeSinceGeneration =
+        EMAIL_VERIFICATION_TOKEN_EXPIRY_MS - timeUntilExpiry;
+
+      // If token was generated less than 30 seconds ago, prevent resend
+      if (timeSinceGeneration < RESEND_COOLDOWN_MS) {
+        const remainingMs = RESEND_COOLDOWN_MS - timeSinceGeneration;
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        const pluralS = remainingSeconds !== 1 ? "s" : "";
+
+        return res.status(429).json({
+          error: `Please wait ${remainingSeconds} second${pluralS} before requesting another verification email.`,
+        });
+      }
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+    const verificationTokenExpiry = new Date(
+      Date.now() + EMAIL_VERIFICATION_TOKEN_EXPIRY_MS
+    );
+
+    // Update token in database
+    await authModel.saveEmailVerificationToken(
+      user._id,
+      verificationTokenHash,
+      verificationTokenExpiry
+    );
+
+    // Send verification email
+    const verificationLink = `${getBackendPublicUrl()}/api/auth/verify-email?token=${verificationToken}`;
+    await withTimeout(
+      sendVerificationEmail(user.email, user.name, verificationLink),
+      EMAIL_SEND_TIMEOUT_MS
+    );
+
+    res.json({
+      message: "Verification email sent successfully. Check your inbox.",
+      expiresIn: "24 hours",
+    });
+  } catch (error) {
+    console.error("Resend verification email error:", error);
+    if (error.message === "Email service timeout") {
+      return res.status(503).json({
+        error: "Email server is taking too long. Please try again in a moment.",
+      });
+    }
+    res.status(500).json({ error: "Failed to resend verification email" });
   }
 }
 
