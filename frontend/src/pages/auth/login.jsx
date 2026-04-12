@@ -264,6 +264,15 @@ export default function Login() {
                 placeholder="••••••••"
               />
             </div>
+            <div className="mt-2 text-right">
+              <button
+                type="button"
+                onClick={() => (window.location.href = "/forgot-password")}
+                className="text-xs text-[#a855f7] hover:text-[#9333ea] transition"
+              >
+                Forgot Password?
+              </button>
+            </div>
           </div>
 
           {/* Submit Button */}

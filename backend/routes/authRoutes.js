@@ -14,6 +14,10 @@ import {
   setupAdmin,
   verifyEmail,
   resendVerificationEmail,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword,
+  resendResetLink,
 } from "../controllers/authController.js";
 import verifyUser, { requireAdmin } from "../middleware/authMiddleware.js";
 
@@ -26,6 +30,10 @@ router.post("/refresh-token", refreshToken);
 router.post("/setup-admin", setupAdmin);
 router.get("/verify-email", verifyEmail);
 router.post("/resend-verification-email", resendVerificationEmail);
+router.post("/forgot-password", forgotPassword);
+router.post("/resend-reset-link", resendResetLink);
+router.get("/verify-reset-token", verifyResetToken);
+router.post("/reset-password", resetPassword);
 
 // Protected routes
 router.get("/profile", verifyUser, getProfile);

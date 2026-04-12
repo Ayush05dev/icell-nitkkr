@@ -166,6 +166,90 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const response = await api.post("/auth/forgot-password", { email });
+
+      return {
+        success: true,
+        message:
+          response.data?.message ||
+          "Password reset link sent. Check your inbox.",
+        expiresIn: response.data?.expiresIn || "24 hours",
+      };
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to request password reset";
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  const verifyResetToken = async (token) => {
+    try {
+      const response = await api.get("/auth/verify-reset-token", {
+        params: { token },
+      });
+
+      return {
+        valid: response.data?.valid || false,
+        message: response.data?.message || "Token verification failed",
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          "Token is invalid or expired",
+      };
+    }
+  };
+
+  const resetPassword = async (token, newPassword, confirmPassword) => {
+    try {
+      const response = await api.post("/auth/reset-password", {
+        token,
+        newPassword,
+        confirmPassword,
+      });
+
+      return {
+        success: response.data?.success || true,
+        message:
+          response.data?.message ||
+          "Password reset successfully. Please log in with your new password.",
+      };
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to reset password";
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  const resendResetLink = async (email) => {
+    try {
+      const response = await api.post("/auth/resend-reset-link", { email });
+
+      return {
+        success: true,
+        message:
+          response.data?.message ||
+          "Password reset link sent. Check your inbox.",
+        expiresIn: response.data?.expiresIn || "24 hours",
+      };
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to resend reset link";
+      return { success: false, error: errorMsg };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -186,6 +270,10 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         resendVerificationEmail,
+        forgotPassword,
+        verifyResetToken,
+        resetPassword,
+        resendResetLink,
         logout,
         getAuthHeader,
       }}

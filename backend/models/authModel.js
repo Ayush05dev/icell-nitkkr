@@ -306,3 +306,118 @@ export async function verifyEmailByTokenHash(tokenHash) {
 
   return result.modifiedCount > 0;
 }
+
+// Save password reset token
+export async function savePasswordResetToken(userId, tokenHash, expiresAt) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const result = await profiles.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        password_reset_token_hash: tokenHash,
+        password_reset_token_expires_at: expiresAt,
+        updated_at: new Date(),
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
+}
+
+// Get user by password reset token hash
+export async function getUserByResetTokenHash(tokenHash) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const now = new Date();
+  return await profiles.findOne({
+    password_reset_token_hash: tokenHash,
+    password_reset_token_expires_at: { $gt: now },
+  });
+}
+
+// Get password reset token info (for cooldown check)
+export async function getPasswordResetTokenInfo(userId) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const user = await profiles.findOne(
+    { _id: userId },
+    {
+      projection: {
+        password_reset_token_expires_at: 1,
+      },
+    }
+  );
+
+  return user?.password_reset_token_expires_at || null;
+}
+
+// Reset user password and clear reset token
+export async function resetUserPassword(userId, hashedPassword) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const result = await profiles.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        password: hashedPassword,
+        updated_at: new Date(),
+      },
+      $unset: {
+        password_reset_token_hash: "",
+        password_reset_token_expires_at: "",
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
+}
+
+// Clear password reset token (for expired tokens or cleanup)
+export async function clearPasswordResetToken(userId) {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const result = await profiles.updateOne(
+    { _id: userId },
+    {
+      $unset: {
+        password_reset_token_hash: "",
+        password_reset_token_expires_at: "",
+      },
+      $set: {
+        updated_at: new Date(),
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
+}
+
+// Delete all expired password reset tokens
+export async function deleteExpiredPasswordResetTokens() {
+  const db = getDB();
+  const profiles = db.collection("profiles");
+
+  const now = new Date();
+  const result = await profiles.updateMany(
+    {
+      password_reset_token_expires_at: { $lt: now, $ne: null },
+    },
+    {
+      $unset: {
+        password_reset_token_hash: "",
+        password_reset_token_expires_at: "",
+      },
+      $set: {
+        updated_at: now,
+      },
+    }
+  );
+
+  return result.modifiedCount;
+}

@@ -7,7 +7,10 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
-import { sendVerificationEmail } from "../utils/emailService.js";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from "../utils/emailService.js";
 
 const NITKKR_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@nitkkr\.ac\.in$/i;
 const EMAIL_VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -15,6 +18,8 @@ const EMAIL_SEND_TIMEOUT_MS = Number(
   process.env.EMAIL_SEND_TIMEOUT_MS || 15000
 );
 const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between resends
+const PASSWORD_RESET_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const PASSWORD_RESET_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown between reset requests
 
 function withTimeout(promise, timeoutMs) {
   return Promise.race([
@@ -579,5 +584,290 @@ export async function deleteStudent(req, res) {
     res
       .status(500)
       .json({ error: error.message || "Failed to delete student" });
+  }
+}
+
+// Forgot password - request password reset
+export async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    if (!NITKKR_EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        error: "Only @nitkkr.ac.in email addresses are allowed",
+      });
+    }
+
+    // Check if user exists
+    const user = await authModel.getUserByEmail(email);
+    if (!user) {
+      // For security, don't reveal if email exists
+      return res.json({
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
+      });
+    }
+
+    // Check reset cooldown based on token generation time (30 seconds)
+    const tokenExpiryTime = await authModel.getPasswordResetTokenInfo(user._id);
+    if (tokenExpiryTime) {
+      const tokenExpiry = new Date(tokenExpiryTime);
+      const now = new Date();
+      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+
+      // Calculate time since token was generated
+      const timeSinceGeneration =
+        PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+
+      // If token was generated less than 30 seconds ago, prevent resend
+      if (timeSinceGeneration < PASSWORD_RESET_COOLDOWN_MS) {
+        const remainingMs = PASSWORD_RESET_COOLDOWN_MS - timeSinceGeneration;
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        const pluralS = remainingSeconds !== 1 ? "s" : "";
+
+        return res.status(429).json({
+          error: `Please wait ${remainingSeconds} second${pluralS} before requesting another password reset email.`,
+        });
+      }
+    }
+
+    // Generate new password reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const resetTokenExpiry = new Date(
+      Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_MS
+    );
+
+    // Save token to database
+    await authModel.savePasswordResetToken(
+      user._id,
+      resetTokenHash,
+      resetTokenExpiry
+    );
+
+    // Send reset email
+    const resetLink = `${getFrontendUrl()}/forgot-password?token=${resetToken}`;
+    await withTimeout(
+      sendPasswordResetEmail(user.email, user.name, resetLink),
+      EMAIL_SEND_TIMEOUT_MS
+    );
+
+    res.json({
+      message:
+        "If an account exists with this email, you will receive a password reset link.",
+      expiresIn: "24 hours",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    if (error.message === "Email service timeout") {
+      return res.status(503).json({
+        error: "Email server is taking too long. Please try again in a moment.",
+      });
+    }
+    res.status(500).json({ error: "Failed to process password reset request" });
+  }
+}
+
+// Verify reset token
+export async function verifyResetToken(req, res) {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        valid: false,
+        message: "Reset token is required",
+      });
+    }
+
+    // Hash the token to find in database
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find user with this reset token
+    const user = await authModel.getUserByResetTokenHash(tokenHash);
+
+    if (!user) {
+      return res.status(400).json({
+        valid: false,
+        message:
+          "Your reset link has expired or is invalid. Please request a new password reset.",
+      });
+    }
+
+    // Token is valid
+    res.json({
+      valid: true,
+      message: "Reset token is valid",
+    });
+  } catch (error) {
+    console.error("Verify reset token error:", error);
+    res.status(500).json({
+      valid: false,
+      message: "Failed to verify reset token",
+    });
+  }
+}
+
+// Reset password - submit new password
+export async function resetPassword(req, res) {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    // Validate inputs
+    if (!token) {
+      return res.status(400).json({ error: "Reset token is required" });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({ error: "New password is required" });
+    }
+
+    if (!confirmPassword) {
+      return res
+        .status(400)
+        .json({ error: "Password confirmation is required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
+
+    // Validate password strength (same as registration)
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Hash the token to find in database
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find user with this reset token
+    const user = await authModel.getUserByResetTokenHash(tokenHash);
+
+    if (!user) {
+      return res.status(400).json({
+        error:
+          "Your reset link has expired or is invalid. Please request a new password reset.",
+      });
+    }
+
+    // Hash the new password
+    const bcrypt = (await import("bcryptjs")).default;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and clear reset token
+    const updated = await authModel.resetUserPassword(user._id, hashedPassword);
+
+    if (!updated) {
+      return res.status(500).json({ error: "Failed to reset password" });
+    }
+
+    res.json({
+      success: true,
+      message:
+        "Password has been reset successfully. You can now log in with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+}
+
+// Resend password reset link
+export async function resendResetLink(req, res) {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    if (!NITKKR_EMAIL_REGEX.test(email)) {
+      return res.status(400).json({
+        error: "Only @nitkkr.ac.in email addresses are allowed",
+      });
+    }
+
+    // Check if user exists
+    const user = await authModel.getUserByEmail(email);
+    if (!user) {
+      // For security, don't reveal if email exists
+      return res.json({
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
+      });
+    }
+
+    // Check reset cooldown based on token generation time (30 seconds)
+    const tokenExpiryTime = await authModel.getPasswordResetTokenInfo(user._id);
+    if (tokenExpiryTime) {
+      const tokenExpiry = new Date(tokenExpiryTime);
+      const now = new Date();
+      const timeUntilExpiry = tokenExpiry.getTime() - now.getTime();
+
+      // Calculate time since token was generated
+      const timeSinceGeneration =
+        PASSWORD_RESET_TOKEN_EXPIRY_MS - timeUntilExpiry;
+
+      // If token was generated less than 30 seconds ago, prevent resend
+      if (timeSinceGeneration < PASSWORD_RESET_COOLDOWN_MS) {
+        const remainingMs = PASSWORD_RESET_COOLDOWN_MS - timeSinceGeneration;
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        const pluralS = remainingSeconds !== 1 ? "s" : "";
+
+        return res.status(429).json({
+          error: `Please wait ${remainingSeconds} second${pluralS} before requesting another password reset email.`,
+        });
+      }
+    }
+
+    // Generate new password reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const resetTokenExpiry = new Date(
+      Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_MS
+    );
+
+    // Update token in database
+    await authModel.savePasswordResetToken(
+      user._id,
+      resetTokenHash,
+      resetTokenExpiry
+    );
+
+    // Send reset email
+    const resetLink = `${getFrontendUrl()}/forgot-password?token=${resetToken}`;
+    await withTimeout(
+      sendPasswordResetEmail(user.email, user.name, resetLink),
+      EMAIL_SEND_TIMEOUT_MS
+    );
+
+    res.json({
+      message:
+        "Password reset link sent successfully. Check your inbox for the email.",
+      expiresIn: "24 hours",
+    });
+  } catch (error) {
+    console.error("Resend reset link error:", error);
+    if (error.message === "Email service timeout") {
+      return res.status(503).json({
+        error: "Email server is taking too long. Please try again in a moment.",
+      });
+    }
+    res.status(500).json({ error: "Failed to resend password reset email" });
   }
 }
