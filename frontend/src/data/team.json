@@ -1,0 +1,90 @@
+[
+  {
+    "id": "b6c1e8d6-f311-4851-b04a-ebb55e0ddd8d",
+    "name": "Divanshu Agarwal",
+    "position": "President",
+    "image": "https://i.ibb.co/nqFJ5f87/IMG-20251007-WA0016.jpg",
+    "linkedin": "https://www.linkedin.com/in/divanshu-agarwal-912688349",
+    "instagram": "https://www.instagram.com/divanshuagarwalofficial"
+  },
+  {
+    "id": "b329106f-c858-4927-8de8-f1bb5636f03d",
+    "name": "Suryansh Singh",
+    "position": "Vice President",
+    "image": "https://i.ibb.co/hRc67Q1s/Screenshot-2026-03-28-151928.png",
+    "linkedin": "https://www.linkedin.com/in/suryansh-singh-302150262",
+    "instagram": "https://instagram.com/suryanshsingh_25"
+  },
+  {
+    "id": "af16150d-6949-4860-9802-04d9790309a7",
+    "name": "Suhani Singh",
+    "position": "Secretary",
+    "image": "https://i.ibb.co/W4nxVh89/Suhani-Singh.jpg",
+    "linkedin": "https://www.linkedin.com/in/suhani-singh-172a0b263",
+    "instagram": "https://www.instagram.com/suhanisingh_512"
+  },
+  {
+    "id": "fea36409-5884-423d-9c4b-c7ac7550c77a",
+    "name": "Dhruv Dhankhar",
+    "position": "Joint Secretary",
+    "image": "https://i.ibb.co/Jw6XMJxY/DHRUV-DHANKAR.png",
+    "linkedin": "https://www.linkedin.com/in/dhruv-dhankhar-9a03ba248",
+    "instagram": "https://www.instagram.com/dhruv__5903"
+  },
+  {
+    "id": "d76698aa-dc6f-4e07-aec3-baa1d83df827",
+    "name": "Shreyas Srivastava",
+    "position": "Treasurer",
+    "image": "https://i.ibb.co/5XvxqvkX/1000004895-jpg.jpg",
+    "linkedin": "https://www.linkedin.com/in/shreyas-srivastava17",
+    "instagram": "https://instagram.com/_shreyas._17"
+  },
+  {
+    "id": "cf4c954c-7ea0-424a-872a-f7398ce9ff33",
+    "name": "Anubhaav Goel",
+    "position": "Event Coordinator",
+    "image": "https://i.ibb.co/KxyBwvsL/Whats-App-Image-2026-03-09-at-9-21-13-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/anubhaav-goel-5364b225a/",
+    "instagram": "https://www.instagram.com/anubhaavgoel"
+  },
+  {
+    "id": "148bb477-0f31-47f1-a714-61406d89bdae",
+    "name": "Siddhi Jadhav",
+    "position": "Design & Content Head",
+    "image": "https://i.ibb.co/k6QpkyHK/Whats-App-Image-2026-03-09-at-10-17-19-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/siddhi-jadhav-1865a0259/",
+    "instagram": "https://www.instagram.com/siddhi_jadhav_01_/"
+  },
+  {
+    "id": "3dbf2697-ff27-4207-9898-a5a1245935f9",
+    "name": "Deependra Varshney",
+    "position": "Tech Head",
+    "image": "https://i.ibb.co/YF3cWcLG/Whats-App-Image-2026-03-09-at-9-26-39-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/deependra-varshney-818036209",
+    "instagram": "https://www.instagram.com/dev_varshne"
+  },
+  {
+    "id": "ab4ceba8-220a-46cf-adf4-54e78acffe84",
+    "name": "Yashu Agrawal",
+    "position": "Sponsorship Head",
+    "image": "https://i.ibb.co/HLJGWb8d/Whats-App-Image-2026-03-10-at-10-37-37-AM.jpg",
+    "linkedin": "https://www.linkedin.com/in/yashu-agrawal-a08179268",
+    "instagram": "https://www.instagram.com/invites/contact/"
+  },
+  {
+    "id": "ed2c6958-ea49-4a3a-804b-09358214cc02",
+    "name": "Deepanshu Bhardwaj",
+    "position": "Management Head",
+    "image": "https://i.ibb.co/nsH5Rk1X/Whats-App-Image-2026-03-09-at-9-25-29-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/deepanshu-bhardwaj/",
+    "instagram": "https://instagram.com/Deepanshu_bhardwaj62"
+  },
+  {
+    "id": "fed33075-0d63-4b19-a7f3-2bb5926f7642",
+    "name": "Daksh Singh Chauhan",
+    "position": "Event Coordinator",
+    "image": "https://i.ibb.co/PzzLsXvj/Whats-App-Image-2026-03-09-at-9-47-00-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/daksh-singh-chauhan-03ab47255",
+    "instagram": "https://instagram.com/daksh_s02"
+  }
+]
