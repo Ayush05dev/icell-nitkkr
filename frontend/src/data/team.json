@@ -1,90 +1,98 @@
 [
   {
     "id": "b6c1e8d6-f311-4851-b04a-ebb55e0ddd8d",
-    "name": "Divanshu Agarwal",
-    "position": "President",
-    "image": "https://i.ibb.co/nqFJ5f87/IMG-20251007-WA0016.jpg",
-    "linkedin": "https://www.linkedin.com/in/divanshu-agarwal-912688349",
-    "instagram": "https://www.instagram.com/divanshuagarwalofficial"
+    "name": "Vansh Agrawal",
+    "position": "Convener",
+    "image": "https://i.ibb.co/9Hk70wpr/Whats-App-Image-2026-09-25-at-3-16-29-PM.jpg",
+    "linkedin": "https://www.linkedin.com/in/agrawal-vansh/",
+    "instagram": "https://www.instagram.com/vansh_agrawal.05"
   },
   {
     "id": "b329106f-c858-4927-8de8-f1bb5636f03d",
-    "name": "Suryansh Singh",
-    "position": "Vice President",
-    "image": "https://i.ibb.co/hRc67Q1s/Screenshot-2026-03-28-151928.png",
-    "linkedin": "https://www.linkedin.com/in/suryansh-singh-302150262",
-    "instagram": "https://instagram.com/suryanshsingh_25"
+    "name": "Akansha Patel",
+    "position": "Co-Convener",
+    "image": "https://i.ibb.co/Lh2CC9Jh/IMG-20250727-WA0004-AKANSHA-PATEL.jpg",
+    "linkedin": "https://www.linkedin.com/in/akansha-patel1",
+    "instagram": ""
   },
   {
     "id": "af16150d-6949-4860-9802-04d9790309a7",
-    "name": "Suhani Singh",
-    "position": "Secretary",
-    "image": "https://i.ibb.co/W4nxVh89/Suhani-Singh.jpg",
-    "linkedin": "https://www.linkedin.com/in/suhani-singh-172a0b263",
-    "instagram": "https://www.instagram.com/suhanisingh_512"
+    "name": "Lakshay Jain",
+    "position": "Co-Convener",
+    "image": "https://i.ibb.co/Q7nDrHbv/file-00000000336882118a1d1ca20d8700d5-Lakashay-Jain.png",
+    "linkedin": "https://www.linkedin.com/in/lakshay-jain-4a475b203?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+    "instagram": ""
   },
   {
     "id": "fea36409-5884-423d-9c4b-c7ac7550c77a",
-    "name": "Dhruv Dhankhar",
-    "position": "Joint Secretary",
-    "image": "https://i.ibb.co/Jw6XMJxY/DHRUV-DHANKAR.png",
-    "linkedin": "https://www.linkedin.com/in/dhruv-dhankhar-9a03ba248",
-    "instagram": "https://www.instagram.com/dhruv__5903"
+    "name": "Sangamesh",
+    "position": "Co-Convener",
+    "image": "https://i.ibb.co/1tbHf8nV/Screenshot-2026-08-11-21-23-54-576-com-google-android-apps-nbu-files-1-Bhopalgade-Sangamesh.jpg",
+    "linkedin": "",
+    "instagram": ""
   },
   {
     "id": "d76698aa-dc6f-4e07-aec3-baa1d83df827",
     "name": "Shreyas Srivastava",
-    "position": "Treasurer",
-    "image": "https://i.ibb.co/5XvxqvkX/1000004895-jpg.jpg",
-    "linkedin": "https://www.linkedin.com/in/shreyas-srivastava17",
-    "instagram": "https://instagram.com/_shreyas._17"
+    "position": "Co-Convener",
+    "image": "https://i.ibb.co/8DTr2RqJ/DSC-9176-2-Shreyas.jpg",
+    "linkedin": "",
+    "instagram": ""
   },
   {
     "id": "cf4c954c-7ea0-424a-872a-f7398ce9ff33",
-    "name": "Anubhaav Goel",
+    "name": "Naveen Beniwal",
     "position": "Event Coordinator",
-    "image": "https://i.ibb.co/KxyBwvsL/Whats-App-Image-2026-03-09-at-9-21-13-PM.jpg",
-    "linkedin": "https://www.linkedin.com/in/anubhaav-goel-5364b225a/",
-    "instagram": "https://www.instagram.com/anubhaavgoel"
+    "image": "https://i.ibb.co/pr4ZvLJH/IMG-20260829-WA0017-naveen-beniwal.jpg",
+    "linkedin": "https://www.linkedin.com/in/naveen-beniwal-40b719313/",
+    "instagram": "https://www.instagram.com/naveen_beniwal_265?igsi=d215bjlvNWYxc3F4"
   },
   {
     "id": "148bb477-0f31-47f1-a714-61406d89bdae",
-    "name": "Siddhi Jadhav",
-    "position": "Design & Content Head",
-    "image": "https://i.ibb.co/k6QpkyHK/Whats-App-Image-2026-03-09-at-10-17-19-PM.jpg",
-    "linkedin": "https://www.linkedin.com/in/siddhi-jadhav-1865a0259/",
-    "instagram": "https://www.instagram.com/siddhi_jadhav_01_/"
+    "name": "Ayush Singhal",
+    "position": "Event Coordinator",
+    "image": "https://i.ibb.co/HDrMvmHK/Screenshot-2026-08-30-16-14-20-88-1c337646f29875672b5a61192b9010f9-AYUSH-SINGHAL.jpg",
+    "linkedin": "https://www.linkedin.com/in/ayush3107?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+    "instagram": ""
   },
   {
     "id": "3dbf2697-ff27-4207-9898-a5a1245935f9",
-    "name": "Deependra Varshney",
+    "name": "Ayush Bansal",
     "position": "Tech Head",
-    "image": "https://i.ibb.co/YF3cWcLG/Whats-App-Image-2026-03-09-at-9-26-39-PM.jpg",
-    "linkedin": "https://www.linkedin.com/in/deependra-varshney-818036209",
-    "instagram": "https://www.instagram.com/dev_varshne"
+    "image": "https://i.ibb.co/SX59c7ws/IMG-20260829-155954-AYUSH-BANSAL.jpg",
+    "linkedin": "https://www.linkedin.com/in/ayushbansal0520",
+    "instagram": "https://www.instagram.com/ayusshhh05?stkn=NGVubTVoMDl4M3g0"
   },
   {
     "id": "ab4ceba8-220a-46cf-adf4-54e78acffe84",
-    "name": "Yashu Agrawal",
-    "position": "Sponsorship Head",
-    "image": "https://i.ibb.co/HLJGWb8d/Whats-App-Image-2026-03-10-at-10-37-37-AM.jpg",
-    "linkedin": "https://www.linkedin.com/in/yashu-agrawal-a08179268",
-    "instagram": "https://www.instagram.com/invites/contact/"
+    "name": "Abhishek Jain",
+    "position": "Outreach Head",
+    "image": "https://i.ibb.co/0jWq27xZ/Whats-App-Image-2026-08-30-at-4-54-06-PM-Abhishek-Jain.jpg",
+    "linkedin": "https://www.linkedin.com/in/abhishek-jain-aa9171280/",
+    "instagram": ""
   },
   {
     "id": "ed2c6958-ea49-4a3a-804b-09358214cc02",
-    "name": "Deepanshu Bhardwaj",
+    "name": "Deepesh Yadav",
     "position": "Management Head",
-    "image": "https://i.ibb.co/nsH5Rk1X/Whats-App-Image-2026-03-09-at-9-25-29-PM.jpg",
-    "linkedin": "https://www.linkedin.com/in/deepanshu-bhardwaj/",
-    "instagram": "https://instagram.com/Deepanshu_bhardwaj62"
+    "image": "https://i.ibb.co/1G9BpnGm/IMG-20260213-WA0044-Deepesh-Yadav.jpg",
+    "linkedin": "",
+    "instagram": ""
   },
   {
     "id": "fed33075-0d63-4b19-a7f3-2bb5926f7642",
-    "name": "Daksh Singh Chauhan",
-    "position": "Event Coordinator",
-    "image": "https://i.ibb.co/PzzLsXvj/Whats-App-Image-2026-03-09-at-9-47-00-PM.jpg",
-    "linkedin": "https://www.linkedin.com/in/daksh-singh-chauhan-03ab47255",
-    "instagram": "https://instagram.com/daksh_s02"
+    "name": "Dimpy",
+    "position": "Design Head",
+    "image": "https://i.ibb.co/27c7BTkg/IMG-20260526-WA0012-Dimpy.jpg",
+    "linkedin": "https://www.linkedin.com/in/dimpy-b7b91b300?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+    "instagram": ""
+  },
+  {
+    "id": "b4ea02e6-42c3-44d5-9d2c-d91ea9d15e09",
+    "name": "Aayush Kashyap",
+    "position": "Design Head",
+    "image": "https://i.ibb.co/vCBtxMjd/IMG-20260829-213541-AAYUSH-KASHYAP.png",
+    "linkedin": "https://www.linkedin.com/in/aayushkashyap617/",
+    "instagram": "https://www.instagram.com/aayush._.kashyap"
   }
 ]
